@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lector en Voz Alta</title>
+<meta name="theme-color" content="#0f6d6a">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,400;7..72,600&family=Figtree:wght@400;600;700&display=swap">
+<style>
+/* Layout: una columna de lectura; barra de reproducción fija abajo, al alcance del pulgar */
+:root{
+  --bg:#eef2f1; --paper:#ffffff; --ink:#18242b; --muted:#5d6d70;
+  --accent:#0f6d6a; --accent-ink:#ffffff; --mark:#ffe3a3; --line:#d5dfdd; --err:#b3261e;
+  --read:'Literata', Georgia, serif; --ui:'Figtree', system-ui, sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#101719; --paper:#172124; --ink:#e4ecea; --muted:#93a5a6;
+  --accent:#4fc1b8; --accent-ink:#0b1a1a; --mark:#5a4a1c; --line:#26353a; --err:#ff8a80; color-scheme:dark}}
+*{box-sizing:border-box}
+html{padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--ui);font-size:16px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:20px 170px}
+.wrap{max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+h1{font-family:var(--read);font-weight:600;font-size:1.6rem;margin:0;text-wrap:balance}
+.sub{color:var(--muted);margin:4px 0 0;font-size:.95rem;line-height:1.45}
+.drop{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;padding:22px 16px;
+  border:2px dashed var(--line);border-radius:14px;background:var(--paper);text-align:center;cursor:pointer}
+.drop:focus-within{outline:3px solid var(--accent);outline-offset:2px}
+.drop strong{font-size:1.05rem}
+.drop span{color:var(--muted);font-size:.88rem}
+.drop input{position:absolute;opacity:0;width:1px;height:1px}
+.status{font-size:.9rem;color:var(--muted);min-height:1.2em;line-height:1.4}
+.status.err{color:var(--err)}
+.meter{height:6px;border-radius:99px;background:var(--line);overflow:hidden}
+.meter i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}
+.doc{background:var(--paper);border-radius:14px;padding:20px 18px;border:1px solid var(--line);
+  font-family:var(--read);font-size:1.08rem;line-height:1.7}
+.doc h2{font-family:var(--ui);font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 10px;word-break:break-word}
+.doc p{margin:0 0 .9em}
+.s{cursor:pointer;border-radius:4px;transition:background .15s}
+.s.now{background:var(--mark)}
+details{font-size:.92rem;color:var(--muted)}
+details summary{cursor:pointer;font-weight:600;color:var(--ink)}
+details p{line-height:1.45}
+textarea{width:100%;min-height:120px;margin-top:8px;font:inherit;color:var(--ink);background:var(--paper);
+  border:1px solid var(--line);border-radius:10px;padding:10px}
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--paper);border-top:1px solid var(--line);
+  padding:12px max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
+  z-index:5}
+.bar .in{max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+button{font:inherit;font-weight:600;border:0;border-radius:999px;padding:12px 18px;cursor:pointer;
+  background:var(--bg);color:var(--ink)}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+#play{background:var(--accent);color:var(--accent-ink);flex:1;min-width:140px;font-size:1.05rem}
+button:disabled{opacity:.45;cursor:default}
+select{font:inherit;flex:1 1 220px;min-width:0;padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+.speed{display:flex;align-items:center;gap:8px;font-size:.85rem;color:var(--muted);flex:1;min-width:150px}
+.speed input{flex:1;accent-color:var(--accent)}
+.prog{font-size:.8rem;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.btn-text{flex:0 0 auto}
+.small{padding:8px 14px;font-size:.88rem}
+@media (prefers-reduced-motion:reduce){.s,.meter i{transition:none}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>Lector en voz alta</h1>
+    <p class="sub">Subí un PDF o un Word y escuchalo. Las voces IA de acento latino se descargan una sola vez y después funcionan en tu teléfono, gratis y sin límite. El archivo no sale de tu celular.</p>
+  </header>
+
+  <label class="drop" for="file">
+    <strong>Elegir PDF o Word</strong>
+    <span>.pdf · .docx · .txt</span>
+    <input id="file" type="file" accept=".pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain">
+  </label>
+  <div>
+    <div id="status" class="status" role="status"></div>
+    <div class="meter" id="meter" hidden><i id="meterFill"></i></div>
+  </div>
+
+  <details>
+    <summary>O pegar texto</summary>
+    <textarea id="paste" placeholder="Pegá aquí cualquier texto…"></textarea>
+    <button id="usePaste" type="button" style="margin-top:8px">Usar este texto</button>
+  </details>
+
+  <article class="doc">
+    <h2 id="docName">Ejemplo</h2>
+    <div id="text"></div>
+  </article>
+
+  <details>
+    <summary>Sobre las voces</summary>
+    <p>Las voces que dicen <b>IA</b> son modelos neuronales libres (Piper). La primera vez que usás una, el teléfono descarga la voz y el motor; conviene hacerlo con WiFi. Después queda guardada.</p>
+    <p>Las voces del teléfono no descargan nada y arrancan al instante, pero suenan más robóticas.</p>
+    <p id="stored">Voces IA guardadas: revisando…</p>
+    <button id="clearVoices" type="button" class="small">Borrar voces IA guardadas</button>
+  </details>
+</div>
+
+<div class="bar">
+  <div class="in">
+    <div class="row">
+      <button id="back" class="btn-text" type="button" aria-label="Frase anterior">⏮</button>
+      <button id="play" type="button">▶ Leer</button>
+      <button id="stop" class="btn-text" type="button" aria-label="Detener">■</button>
+      <button id="fwd" class="btn-text" type="button" aria-label="Frase siguiente">⏭</button>
+    </div>
+    <div class="row">
+      <select id="voice" aria-label="Voz"></select>
+      <div class="speed"><label for="rate">Velocidad</label><input id="rate" type="range" min="0.6" max="2" step="0.1" value="1"><span id="rateVal">1.0×</span></div>
+      <span class="prog" id="prog">0 / 0</span>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/onnxruntime-web/1.18.0/ort.min.js"></script>
+<script>
+/* ================= configuración ================= */
+const ORT_WASM = 'https://cdnjs.cloudflare.com/ajax/libs/onnxruntime-web/1.18.0/';
+const PH_BASE  = 'https://cdn.jsdelivr.net/npm/@diffusionstudio/piper-wasm@1.0.0/build/piper_phonemize';
+const PH_GLUE  = 'https://cdn.jsdelivr.net/npm/@diffusionstudio/vits-web@1.0.3/dist/piper-DeOu3H9E.js';
+const HF       = 'https://huggingface.co/rhasspy/piper-voices/resolve/main/';
+const AI_VOICES = [
+  {id:'es_MX-ald-medium',   path:'es/es_MX/ald/medium/es_MX-ald-medium',       name:'IA · México (Ald) · ~60 MB'},
+  {id:'es_MX-claude-high',  path:'es/es_MX/claude/high/es_MX-claude-high',     name:'IA · México (Claude) · mejor calidad, ~110 MB'},
+  {id:'es_AR-daniela-high', path:'es/es_AR/daniela/high/es_AR-daniela-high',   name:'IA · Argentina (Daniela) · ~110 MB'},
+];
+const CACHE_NAME = 'lector-voces-v1';
+
+/* ================= utilidades ================= */
+const $=id=>document.getElementById(id);
+const synth=window.speechSynthesis;
+let sentences=[], idx=0, playing=false, sysVoices=[], docKey='ejemplo';
+
+const SAMPLE=`Hola. Esta página lee en voz alta cualquier PDF o documento de Word que subás.
+
+Elegí una voz abajo. Las voces IA tienen acento latino y suenan más naturales; la primera vez tardan un poco porque se descargan.
+
+Si querés empezar desde una parte específica, tocá cualquier frase del texto y la lectura arranca ahí.`;
+
+function store(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+function load(k){try{return localStorage.getItem(k)}catch(e){return null}}
+function setStatus(m,err){$('status').textContent=m;$('status').className='status'+(err?' err':'')}
+function meter(frac){ if(frac==null){$('meter').hidden=true;return} $('meter').hidden=false; $('meterFill').style.width=Math.round(frac*100)+'%'; }
+const mb=n=>(n/1048576).toFixed(0)+' MB';
+
+/* ================= lista de voces ================= */
+function buildVoiceList(){
+  const sel=$('voice'), saved=load('voz2');
+  sel.innerHTML='';
+  const g1=document.createElement('optgroup'); g1.label='Voces IA (acento latino)';
+  AI_VOICES.forEach(v=>{const o=document.createElement('option');o.value='ai:'+v.id;o.textContent=v.name;g1.appendChild(o)});
+  sel.appendChild(g1);
+  if(synth){
+    sysVoices=synth.getVoices();
+    const score=v=>{let s=0;const l=v.lang.replace('_','-');
+      if(/^es/i.test(l))s+=100;
+      if(/es-(CR|MX|US|419|CO|AR|CL|PE|VE|EC|GT|PA|HN|NI|SV|DO|PR|UY|PY|BO|CU)/i.test(l))s+=50;
+      if(/natural|neural|enhanced|mejorad|premium|online|wavenet/i.test(v.name))s+=30;
+      if(!v.localService)s+=10;return s};
+    const sorted=[...sysVoices].sort((a,b)=>score(b)-score(a)||a.name.localeCompare(b.name));
+    if(sorted.length){
+      const g2=document.createElement('optgroup'); g2.label='Voces del teléfono (sin descarga)';
+      sorted.forEach(v=>{const o=document.createElement('option');o.value='sys:'+v.voiceURI;o.textContent=`${v.name} (${v.lang})`;g2.appendChild(o)});
+      sel.appendChild(g2);
+    }
+  }
+  const values=[...sel.options].map(o=>o.value);
+  sel.value=values.includes(saved)?saved:'ai:'+AI_VOICES[0].id;
+}
+buildVoiceList();
+if(synth) synth.onvoiceschanged=buildVoiceList;
+const currentVoice=()=>{const v=$('voice').value;return v.startsWith('ai:')?{kind:'ai',ai:AI_VOICES.find(a=>'ai:'+a.id===v)}:{kind:'sys',sys:sysVoices.find(s=>'sys:'+s.voiceURI===v)}};
+$('voice').onchange=()=>{store('voz2',$('voice').value); if(playing){pause();start()} else hintVoice()};
+async function hintVoice(){
+  const c=currentVoice();
+  if(c.kind==='ai'){
+    const have=await isCached(HF+c.ai.path+'.onnx');
+    setStatus(have?'Voz IA lista en tu teléfono.':'Esta voz se descarga la primera vez que tocás Leer. Mejor con WiFi.');
+  }
+}
+const savedRate=load('vel'); if(savedRate)$('rate').value=savedRate;
+function showRate(){$('rateVal').textContent=(+$('rate').value).toFixed(1)+'×'}
+showRate();
+$('rate').oninput=showRate;
+$('rate').onchange=()=>{store('vel',$('rate').value); if(playing){pause();start()}};
+
+/* ================= texto → frases ================= */
+function render(text,name){
+  stop();
+  sentences=[];
+  const box=$('text');box.innerHTML='';
+  const paras=text.replace(/\r/g,'').split(/\n\s*\n+/).map(p=>p.replace(/\s+/g,' ').trim()).filter(Boolean);
+  paras.forEach(p=>{
+    const el=document.createElement('p');
+    const parts=p.match(/[¿¡]*[^.!?¿¡…:;]+[.!?…:;]*["»”)]*\s*/g)||[p];
+    const buf=[];
+    parts.forEach(s=>{
+      while(s.length>220){const cut=s.lastIndexOf(' ',200);const c=cut>50?cut:200;buf.push(s.slice(0,c));s=s.slice(c)}
+      buf.push(s);
+    });
+    buf.forEach(s=>{
+      if(!s.trim())return;
+      const sp=document.createElement('span');sp.className='s';sp.textContent=s;
+      const i=sentences.length;sp.onclick=()=>{pause();idx=i;start()};
+      sentences.push({t:s.trim(),el:sp});el.appendChild(sp);
+    });
+    box.appendChild(el);
+  });
+  $('docName').textContent=name;
+  docKey='pos:'+name+':'+sentences.length;
+  const pos=+load(docKey)||0; idx=pos<sentences.length?pos:0;
+  mark();
+  if(idx>0)setStatus(`Listo. Seguís donde quedaste (frase ${idx+1}).`);
+}
+
+/* ================= controles comunes ================= */
+function mark(){
+  sentences.forEach(s=>s.el.classList.remove('now'));
+  const cur=sentences[idx];
+  if(cur)cur.el.classList.add('now');
+  $('prog').textContent=`${Math.min(idx+1,sentences.length)} / ${sentences.length}`;
+  $('play').textContent=playing?'❚❚ Pausar':(idx>0?'▶ Seguir':'▶ Leer');
+}
+function scrollToCur(){const s=sentences[idx]; if(s)s.el.scrollIntoView({block:'center',behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth'})}
+function finished(){playing=false;idx=0;store(docKey,0);mark();setStatus('Terminó la lectura.')}
+function advance(){idx++;store(docKey,idx);mark()}
+
+let gen=0;            // cada arranque/parada cambia gen y cancela lo anterior
+function start(){
+  if(!sentences.length)return;
+  gen++; playing=true; mark(); requestWake();
+  const c=currentVoice();
+  if(c.kind==='ai'){ unlockAudio(); aiSpeak(gen); }
+  else { if(!synth){setStatus('Este navegador no tiene voces del teléfono. Elegí una voz IA.',true);playing=false;mark();return}
+         synth.cancel(); setTimeout(()=>sysSpeak(gen),60); }
+}
+function halt(){ gen++; synth&&synth.cancel(); if(AI.src){try{AI.src.stop()}catch(e){} AI.src=null} AI.pending.clear(); }
+function pause(){playing=false;halt();mark()}
+function stop(){playing=false;halt();idx=0;store(docKey,0);mark()}
+$('play').onclick=()=>playing?pause():start();
+$('stop').onclick=stop;
+$('back').onclick=()=>{const was=playing;pause();idx=Math.max(0,idx-1);mark();if(was)start()};
+$('fwd').onclick=()=>{const was=playing;pause();idx=Math.min(sentences.length-1,idx+1);mark();if(was)start()};
+
+let lock=null;
+async function requestWake(){try{if('wakeLock' in navigator&&!lock){lock=await navigator.wakeLock.request('screen');lock.addEventListener('release',()=>lock=null)}}catch(e){}}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&playing)requestWake()});
+
+/* ================= voz del teléfono ================= */
+function sysSpeak(token){
+  if(!playing||token!==gen)return;
+  if(idx>=sentences.length)return finished();
+  scrollToCur();
+  const u=new SpeechSynthesisUtterance(sentences[idx].t);
+  const v=currentVoice().sys;
+  if(v){u.voice=v;u.lang=v.lang}else u.lang='es-MX';
+  u.rate=+$('rate').value;
+  u.onend=()=>{if(playing&&token===gen){advance();sysSpeak(token)}};
+  u.onerror=e=>{if(token===gen&&e.error!=='interrupted'&&e.error!=='canceled'){setStatus('La voz se detuvo ('+e.error+'). Tocá Leer otra vez.',true);playing=false;mark()}};
+  synth.speak(u);
+}
+
+/* ================= voz IA (Piper en el navegador) ================= */
+const AI={ph:null,phLines:[],sess:{},cfg:{},ctx:null,src:null,pending:new Map(),queue:Promise.resolve()};
+
+async function isCached(url){try{const c=await caches.open(CACHE_NAME);return !!(await c.match(url))}catch(e){return false}}
+async function fetchCached(url,label){
+  let cache=null; try{cache=await caches.open(CACHE_NAME)}catch(e){}
+  if(cache){const hit=await cache.match(url); if(hit) return await hit.arrayBuffer();}
+  const res=await fetch(url);
+  if(!res.ok) throw new Error(`No se pudo descargar ${label} (error ${res.status}).`);
+  const total=+res.headers.get('Content-Length')||0;
+  let blob;
+  if(res.body&&label){
+    const reader=res.body.getReader(); const chunks=[]; let got=0;
+    for(;;){const {done,value}=await reader.read(); if(done)break; chunks.push(value); got+=value.length;
+      setStatus(`Descargando ${label}: ${mb(got)}${total?' de '+mb(total):''}…`); meter(total?got/total:null);}
+    blob=new Blob(chunks);
+  } else blob=await res.blob();
+  meter(null);
+  if(cache){try{await cache.put(url,new Response(blob))}catch(e){}}
+  return await blob.arrayBuffer();
+}
+
+async function loadPhonemizer(){
+  setStatus('Preparando el motor de voz…');
+  const mod=await import(PH_GLUE);
+  setStatus('Descargando diccionario de pronunciación (unos 18 MB, solo la primera vez)…');
+  return await mod.createPiperPhonemize({
+    print:l=>AI.phLines.push(l), printErr:()=>{},
+    locateFile:f=>f.endsWith('.wasm')?PH_BASE+'.wasm':f.endsWith('.data')?PH_BASE+'.data':f
+  });
+}
+function cleanForPiper(t){
+  return t.normalize('NFC')
+    .replace(/[“”„«»]/g,'"').replace(/[‘’‚]/g,"'").replace(/[–—]/g,', ').replace(/…/g,'...')
+    .replace(/[•·▪●]/g,', ').replace(/[^\p{L}\p{N}\p{P}\p{Zs}$+<=>^`|~°%]/gu,' ').replace(/\s+/g,' ').trim();
+}
+function phonemize(text,lang){
+  AI.phLines=[];
+  try{AI.ph.callMain(['-l',lang,'--input',JSON.stringify([{text}]),'--espeak_data','/espeak-ng-data'])}
+  catch(e){ if(!(e&&e.name==='ExitStatus'&&e.status===0)) throw e; }
+  let ids=[]; AI.phLines.forEach(l=>{try{ids=ids.concat(JSON.parse(l).phoneme_ids||[])}catch(e){}});
+  return ids;
+}
+async function ensureVoice(v){
+  if(!window.ort) throw new Error('No cargó el motor de IA. Revisá la conexión e intentá de nuevo.');
+  if(!AI.ph) AI.ph=await loadPhonemizer();
+  if(!AI.sess[v.id]){
+    const cfg=JSON.parse(new TextDecoder().decode(await fetchCached(HF+v.path+'.onnx.json')));
+    const model=await fetchCached(HF+v.path+'.onnx','la voz');
+    setStatus('Cargando la voz en memoria…');
+    ort.env.wasm.wasmPaths=ORT_WASM;
+    ort.env.wasm.numThreads=self.crossOriginIsolated?Math.min(4,navigator.hardwareConcurrency||1):1;
+    AI.sess[v.id]=await ort.InferenceSession.create(model,{executionProviders:['wasm']});
+    AI.cfg[v.id]=cfg;
+    refreshStored();
+  }
+}
+async function synthesize(text,v,rate){
+  const cfg=AI.cfg[v.id], sess=AI.sess[v.id];
+  const clean=cleanForPiper(text); if(!clean) return null;
+  const ids=phonemize(clean,cfg.espeak.voice); if(ids.length<3) return null;
+  const inf=cfg.inference||{};
+  const feeds={
+    input:new ort.Tensor('int64',BigInt64Array.from(ids,x=>BigInt(x)),[1,ids.length]),
+    input_lengths:new ort.Tensor('int64',BigInt64Array.from([BigInt(ids.length)]),[1]),
+    scales:new ort.Tensor('float32',Float32Array.from([inf.noise_scale??0.667,(inf.length_scale??1)/rate,inf.noise_w??0.8]),[3])
+  };
+  if((cfg.num_speakers||1)>1) feeds.sid=new ort.Tensor('int64',BigInt64Array.from([0n]),[1]);
+  const out=await sess.run(feeds);
+  return {pcm:out.output.data, sr:cfg.audio.sample_rate};
+}
+/* una frase a la vez en el motor; se prepara la siguiente mientras suena la actual */
+function audioFor(i,token,v,rate){
+  if(i>=sentences.length) return null;
+  if(!AI.pending.has(i)){
+    const p=AI.queue.then(()=>token===gen?synthesize(sentences[i].t,v,rate):null);
+    AI.queue=p.catch(()=>{});
+    AI.pending.set(i,p);
+  }
+  return AI.pending.get(i);
+}
+function unlockAudio(){
+  try{
+    if(!AI.ctx) AI.ctx=new (window.AudioContext||window.webkitAudioContext)();
+    if(AI.ctx.state!=='running') AI.ctx.resume();
+    const b=AI.ctx.createBuffer(1,1,22050), s=AI.ctx.createBufferSource(); s.buffer=b; s.connect(AI.ctx.destination); s.start();
+  }catch(e){}
+}
+async function aiSpeak(token){
+  if(!playing||token!==gen) return;
+  const v=currentVoice().ai, rate=+$('rate').value;
+  try{ await ensureVoice(v); }
+  catch(e){ if(token===gen){meter(null);setStatus((e&&e.message)||'No se pudo preparar la voz IA.',true);playing=false;mark()} return; }
+  if(token!==gen) return;
+  setStatus('');
+  playFrom(token,v,rate);
+}
+async function playFrom(token,v,rate){
+  if(!playing||token!==gen) return;
+  if(idx>=sentences.length) return finished();
+  scrollToCur();
+  const cur=audioFor(idx,token,v,rate);
+  audioFor(idx+1,token,v,rate);
+  let a;
+  try{ a=await cur; }catch(e){ if(token===gen){setStatus('La voz IA falló en esta frase: '+(e.message||e),true);playing=false;mark()} return; }
+  if(!playing||token!==gen) return;
+  AI.pending.delete(idx);
+  if(!a){ advance(); return playFrom(token,v,rate); }
+  const buf=AI.ctx.createBuffer(1,a.pcm.length,a.sr); buf.copyToChannel(a.pcm,0);
+  const src=AI.ctx.createBufferSource(); src.buffer=buf; src.connect(AI.ctx.destination);
+  src.onended=()=>{ if(playing&&token===gen){ AI.src=null; advance(); playFrom(token,v,rate); } };
+  AI.src=src; src.start();
+  audioFor(idx+2,token,v,rate);
+}
+
+async function refreshStored(){
+  const have=[]; for(const v of AI_VOICES){ if(await isCached(HF+v.path+'.onnx')) have.push(v.name.split(' · ').slice(0,2).join(' · ')); }
+  $('stored').textContent='Voces IA guardadas: '+(have.length?have.join(', '):'ninguna todavía')+'.';
+}
+$('clearVoices').onclick=async()=>{ pause(); try{await caches.delete(CACHE_NAME)}catch(e){} AI.sess={}; AI.cfg={}; refreshStored(); setStatus('Se borraron las voces IA guardadas.'); };
+refreshStored();
+
+/* ================= archivos ================= */
+async function readPdf(buf){
+  const pdf=await pdfjsLib.getDocument({data:buf}).promise;
+  const out=[];
+  for(let p=1;p<=pdf.numPages;p++){
+    setStatus(`Leyendo página ${p} de ${pdf.numPages}…`);
+    const c=await (await pdf.getPage(p)).getTextContent();
+    let page='',lastY=null;
+    c.items.forEach(it=>{
+      const y=it.transform[5];
+      if(lastY!==null&&Math.abs(y-lastY)>(it.height||10)*1.6)page+='\n\n';
+      else if(lastY!==null&&Math.abs(y-lastY)>2)page+=' ';
+      page+=it.str;lastY=y;
+    });
+    out.push(page.replace(/-\s+(?=[a-záéíóúñ])/g,''));
+  }
+  return out.join('\n\n');
+}
+$('file').onchange=async e=>{
+  const f=e.target.files[0];if(!f)return;
+  setStatus('Abriendo '+f.name+'…');
+  try{
+    const buf=await f.arrayBuffer();
+    let text='';
+    if(/\.pdf$/i.test(f.name)||f.type==='application/pdf')text=await readPdf(buf);
+    else if(/\.docx$/i.test(f.name)){const r=await mammoth.extractRawText({arrayBuffer:buf});text=r.value;}
+    else if(/\.doc$/i.test(f.name)) throw new Error('Los .doc viejos no se pueden abrir. Guardalo como .docx o PDF desde Word.');
+    else text=new TextDecoder().decode(buf);
+    if(!text.trim())throw new Error('No encontré texto. Si el PDF es un escaneo (fotos de páginas), no trae letras que se puedan leer.');
+    render(text,f.name);
+    if(!(+load(docKey)))setStatus(`Listo: ${sentences.length} frases. Tocá Leer.`);
+  }catch(err){setStatus(err.message||'No pude abrir ese archivo.',true)}
+  e.target.value='';
+};
+$('usePaste').onclick=()=>{const t=$('paste').value;if(t.trim()){render(t,'Texto pegado');setStatus('Listo. Tocá Leer.')}};
+
+render(SAMPLE,'Ejemplo');
+hintVoice();
+</script>
+</body>
+</html>
