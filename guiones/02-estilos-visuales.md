@@ -45,3 +45,9 @@ El mundo sigue a color. Lo que distorsiona son los seres:
 | 8 (el tiempo se detiene) | Ramiel en carbón con el filo azul; luz tenue que pasa al niño |
 | 9 (Azael habla) | Carbón frente a Abismo, en una calle a todo color |
 | 10 (despierta) | El niño vuelve a acuarela, pero en tonos fríos |
+
+## Resultado de las pruebas (ChatGPT imagen)
+- **Aprobados como dirección**: el protagonista en acuarela, Duncan en la cancha (mundo a color + él en imprenta) y Ramiel v2 (color natural + emoción).
+- **Creación**: muy bien. Es la excepción: antes de la tierra no hay fondo «del mundo».
+- **Abismo**: muy bien; también es excepción (mundo sin luz). Quitar iglesias, cruces y templos.
+- **Base de dibujo común (decidido tras las pruebas)**: todos los personajes con el mismo nivel de realismo, el del protagonista: ilustración anime-cómic semirrealista con línea de tinta. Ramiel v2 salió demasiado realista y Duncan demasiado adulto y musculoso.
