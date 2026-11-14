@@ -68,3 +68,29 @@ Solo aparece en un plano (luces y frenazo). No necesita hoja: en el prompt basta
 ## Sin hoja
 - **La bebé**: siempre envuelta en la cobija amarilla pálida; basta con describirla.
 - **El mercado y los extras**: aparecen en un solo plano; se describen en el prompt.
+
+---
+
+# Revisión de la segunda tanda
+
+| Hoja | Estado | Ajuste |
+|---|---|---|
+| Azael | Aprobada | — |
+| Ramiel encapuchado | Aprobada | — |
+| Ramiel con alas | Aprobada | En los prompts de video: «faint soft glow, no sparks» (en el detalle salieron chispas) |
+| El niño | Aprobada | En video, pedir «straight light blond hair» (salió ondulado; la biblia dice lacio) |
+| La mamá | Aprobada | — |
+| El papá | Aprobada | — |
+| Claukia | Aprobada con nota | Pedir «tiny hummingbird, small body, fast blurred wings» para que no parezca un pájaro grande |
+| Calle y casa | Rehacer | Se ve mexicana (teja, bugambilia, estilo colonial) |
+| Interior | Rehacer | Mismo ajuste |
+
+## 7b. La calle y la casa por fuera — pueblo costarricense
+```
+Imagen vertical 9:16, sin personas ni texto. Estilo: animación pintada a mano a todo color, gouache con pinceladas visibles, línea de tinta suave, luz cálida de tarde de verano. Lugar: una calle de un pueblo rural de Costa Rica. A la izquierda, una casa sencilla de un piso: la mitad de abajo de block de concreto y la de arriba de tablas de madera, pintada de celeste desteñido con marcos blancos, techo de zinc a dos aguas pintado de rojo óxido, canoas de lata. Al frente, un corredor con piso de mosaico rojo y una baranda de reja blanca, macetas hechas con tarros y latas con helechos y crotos, un pequeño jardín de zacate y una cerca de malla con un portón de malla y tubo verde. La calle es angosta, de asfalto gastado, sin acera, con una cuneta de concreto a la orilla. Enfrente, al otro lado de la calle, un higuerón grande y viejo con raíces enormes, que da mucha sombra. Postes de concreto con cables. Al fondo, la calle hace una curva cerrada y detrás se ven montañas muy verdes con potreros y nubes bajas. Nada de tejas de barro ni arquitectura colonial.
+```
+
+## 8b. La casa por dentro — pueblo costarricense
+```
+Imagen vertical 9:16, sin personas ni texto. Estilo: animación pintada a mano a todo color, gouache con pinceladas visibles, línea de tinta suave, luz cálida de tarde que entra por la ventana. Lugar: la sala de una casa sencilla de pueblo rural de Costa Rica. Piso de mosaico de colores gastado, paredes de madera pintadas de crema hasta media altura y de block arriba, cielo raso de tablilla, ventanas de celosías de vidrio con reja blanca, cortinas de tela floreada. Un juego de sala de madera con cojines viejos, un mueble con una tele de cajón, un cuadro de paisaje, una cuna de madera junto a la ventana con una cobija amarilla pálida, pañales y un biberón sobre una mesita. Al fondo, una puerta hacia la cocina y la puerta del frente abierta hacia el corredor con baranda de reja blanca. Una pelota de fútbol blanca con rojo en el piso. Nada de tejas de barro ni arquitectura colonial.
+```
