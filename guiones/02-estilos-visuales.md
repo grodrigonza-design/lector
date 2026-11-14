@@ -2,6 +2,7 @@
 
 ## Regla principal
 - **El mundo siempre va a todo color**: un estilo base pintado a mano, cálido, de pueblo tropical latinoamericano. Es igual en todas las escenas.
+- **El estilo es un acento, no un disfraz** (ajuste tras la primera prueba de Ramiel, que salió como estatua gris): el personaje conserva sus colores naturales (piel, ropa, ojos); la técnica se nota en la línea, las sombras y la textura, más o menos un 20–30 %. **Se intensifica con la emoción** de la escena y baja cuando está tranquilo. La luz de las alas siempre es tenue: nada de rayos ni electricidad.
 - **Solo el personaje lleva su estilo.** Su cuerpo, su ropa y sus alas se dibujan con su técnica propia, y el efecto apenas se escapa unos centímetros a su alrededor, como un aura. El fondo no cambia.
 - **Al final, todos terminan en un solo estilo**: el del mundo (ver «El final»).
 - Los personajes conservan siempre la misma forma (cara, pelo, ropa, proporciones); lo que cambia es la técnica con que están dibujados.
