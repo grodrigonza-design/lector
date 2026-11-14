@@ -2,7 +2,7 @@
 
 ## 1. Análisis del capítulo
 
-El capítulo tiene dos mitades y cuatro momentos dramáticos claros. Cada uno da para un video de ~60–70 s.
+El capítulo tiene dos mitades y cuatro momentos dramáticos claros. Cada uno da para un video de ~62 s.
 
 | Parte | Título del video | Contenido del libro | Gancho final (cliffhanger) |
 |---|---|---|---|
@@ -27,11 +27,11 @@ Puntos con cuidado:
 - **Narrativa corta con visuales IA originales** es de los formatos con mejor retención por segundo; el estilo anime/manga domina en TikTok y lo cinematográfico rinde mejor en watch time en YouTube Shorts.
 - **Formato serie («Parte 1, 2, 3…»)** con cliffhanger: obliga a seguir la cuenta y entrar al perfil.
 - **Monetización**: el contenido con IA se puede monetizar si es original (tu historia, tu guion, tu voz y tu dirección). Lo que se castiga es lo repetitivo o hecho en masa con plantillas («inauthentic content» en YouTube).
-- **TikTok Creator Rewards solo paga videos de más de 1 minuto** → cada parte debe durar **61–75 s**. Así el mismo video sirve para las cuatro plataformas.
+- **TikTok Creator Rewards solo paga videos de más de 1 minuto** → cada parte debe durar **61–62 s** (10 planos de 6 s + 2 s de tarjeta final). Así el mismo video sirve para las cuatro plataformas.
 
 | Plataforma | Formato | Duración ideal | Monetización |
 |---|---|---|---|
-| YouTube Shorts | 9:16 | 61–75 s | Partner Program: 1 000 subs + 10 M vistas de Shorts en 90 días |
+| YouTube Shorts | 9:16 | 61–62 s | Partner Program: 1 000 subs + 10 M vistas de Shorts en 90 días |
 | TikTok | 9:16 | **>60 s obligatorio** | Creator Rewards: 10 000 seguidores, 100 000 vistas en 30 días, 18+ |
 | Facebook Reels | 9:16 | 60–90 s | Programa de contenido de Meta (revisar requisitos en tu cuenta) |
 | Instagram Reels | 9:16 | 60–90 s | Más útil para crecer y llevar tráfico que para cobrar |
@@ -69,11 +69,11 @@ Reglas de producción:
 
 ## 5. Voz y música
 
-Sí se puede. En este entorno tengo acceso a los modelos de Google para **voz (Gemini TTS)** y **música (Lyria)**. Cuando me pases el video montado:
+Sí se puede. En este entorno la **voz (Gemini TTS)** funciona (probado). Cuando me pases el video montado:
 - Lo reviso y mido los tiempos de cada plano.
 - Genero la **narración** en español neutro, ajustada a cada corte, y las líneas de diálogo con voces distintas (niño, mamá, papá, el oscuro, el gris).
-- Genero una **pista de música original** del largo exacto del video (sin problemas de derechos).
-- Te entrego archivos separados (voz.wav, musica.wav y, si quieres, una mezcla) para ponerlos en CapCut.
+- **Música**: la clave de Google de este entorno es gratuita y NO permite generar música (lo probé). Opciones: activar facturación en esa clave, usar la biblioteca de música libre de CapCut o YouTube Audio Library, o generar la pista en otra herramienta. Yo te doy el prompt y los tiempos exactos.
+- Te entrego archivos separados (un .wav por toma de voz) para ponerlos en CapCut.
 
 ## Fuentes
 - [YouTube Shorts Trends November 2026 (anijam.ai)](https://www.anijam.ai/blog/youtube-shorts-trends/)
