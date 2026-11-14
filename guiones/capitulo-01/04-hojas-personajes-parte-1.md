@@ -30,3 +30,41 @@ Hoja de personaje (character sheet) en formato horizontal 16:9, fondo blanco lis
 
 ## Después de estas
 Siguen: la mamá y el papá jóvenes (unos 39 y 37 años en el accidente), la bebé, Claukia (colibrí de luz) y los extras del mercado.
+
+---
+
+# Segunda tanda: familia, Claukia y lugares
+
+Edades en el accidente (la biblia da 50 y 48 cuando él tiene 17): **mamá ~39, papá ~37**. La biblia no describe la casa, la calle ni el carro: lo de abajo es propuesta.
+
+## 4. La mamá (~39 años) — estilo base del mundo
+```
+Hoja de personaje (character sheet) en formato horizontal 16:9, fondo blanco liso, sin escenario y sin texto. Estilo: ilustración anime-cómic semirrealista con línea de tinta negra marcada y color con sombreado suave. Personaje: mujer latinoamericana de unos 39 años, alta, delgada y fuerte, piel algo tostada, ojos oscuros, pelo corto oscuro con algunas canas, un poco alborotado y rebelde, dedos largos y finos con las uñas gastadas por el trabajo. Acaba de tener una bebé hace tres días: ojeras, cansada pero tierna. Blusa sencilla roja de manga corta, holgada, y pantalón cómodo. La hoja muestra a la misma mujer en: vista de frente de cuerpo entero sosteniendo a una bebé recién nacida envuelta en una cobija amarilla pálida, vista de tres cuartos inclinada sobre una cuna, vista de perfil y vista de espaldas; y tres caras de cerca: sonrisa amplia y franca que muestra los dientes y le arruga los ojos, cansancio mirando a la cuna, y miedo con la boca abierta mirando hacia la calle. Mismas proporciones y misma ropa en todas las vistas.
+```
+
+## 5. El papá (~37 años) — estilo base del mundo
+```
+Hoja de personaje (character sheet) en formato horizontal 16:9, fondo blanco liso, sin escenario y sin texto. Estilo: ilustración anime-cómic semirrealista con línea de tinta negra marcada y color con sombreado suave. Personaje: hombre latinoamericano de unos 37 años, agricultor, cara redonda y sonrisa amable, entradas pronunciadas y el pelo empezando a ralear arriba, pelo corto oscuro a los lados, bigote oscuro, anteojos de marco grueso y oscuro, piel curtida por el sol con arrugas alrededor de los ojos, sin hoyuelos. Camisa de manga larga de trabajo arremangada, pantalón de mezclilla y botas. Está ojeroso, sin dormir, pero sonriendo. La hoja muestra al mismo hombre en: vista de frente de cuerpo entero con un biberón en la mano, vista de tres cuartos caminando apurado, vista de perfil y vista de espaldas; y tres caras de cerca: sonrisa cansada, desesperación gritando, y llanto de rodillas. Mismas proporciones y misma ropa en todas las vistas.
+```
+
+## 6. Claukia, el colibrí de luz — acento celeste
+```
+Hoja de criatura (character sheet) en formato horizontal 16:9, fondo negro liso, sin escenario y sin texto. Estilo: ilustración anime-cómic semirrealista con línea fina; como acento, luz prismática suave con bordes cian y magenta y partículas que suben. Criatura: un colibrí pequeño hecho de luz cálida, blanca y dorada, con el cuerpo casi sólido y las alas como un destello transparente que zumba; ojos oscuros, brillantes y atentos, como si entendiera todo. La hoja muestra al mismo colibrí: quieto en el aire de frente, de perfil con las alas abiertas, volando en picada dejando una estela tenue, y un detalle de cerca de la cabeza y los ojos. Brillo tenue, nunca rayos.
+```
+
+## 7. La calle y la casa por fuera (lugar) — vertical
+```
+Imagen vertical 9:16, sin personas ni texto. Estilo: animación pintada a mano a todo color, gouache con pinceladas visibles, línea de tinta suave, luz cálida de tarde de verano tropical. Lugar: una calle de pueblo latinoamericano. A la izquierda, una casa humilde de un piso, de cemento pintada de celeste desteñido, con techo de zinc, un corredor al frente con piso de mosaico, una mecedora y un portón bajo de hierro verde. Enfrente, al otro lado de la calle, un árbol grande de sombra con raíces que levantan la acera. La calle es de asfalto caliente y, al fondo, hace una curva cerrada que tapa la vista. Postes de luz con cables, flores de bugambilia, montañas verdes a lo lejos. Ambiente tranquilo, de domingo.
+```
+
+## 8. La casa por dentro (lugar) — vertical
+```
+Imagen vertical 9:16, sin personas ni texto. Estilo: animación pintada a mano a todo color, gouache con pinceladas visibles, línea de tinta suave, luz cálida de tarde que entra por la ventana. Lugar: la sala de una casa humilde de pueblo latinoamericano, piso de mosaico, paredes de cemento pintadas de crema, un sillón viejo, una cuna de madera junto a la ventana con una cobija amarilla pálida, pañales y un biberón sobre una mesita, una puerta que da a la cocina al fondo y la puerta del frente abierta hacia el corredor. Una pelota de fútbol blanca con rojo en el piso.
+```
+
+## 9. El carro — opcional
+Solo aparece en un plano (luces y frenazo). No necesita hoja: en el prompt basta con «a speeding old dark sedan». Si quieres que se vea, propuesta: sedán viejo gris oscuro, con un faro más amarillento que el otro.
+
+## Sin hoja
+- **La bebé**: siempre envuelta en la cobija amarilla pálida; basta con describirla.
+- **El mercado y los extras**: aparecen en un solo plano; se describen en el prompt.
