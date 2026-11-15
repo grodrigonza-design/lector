@@ -105,3 +105,23 @@ Vista desde la calle, a lo lejos: la mamá (unos 39 años, pelo corto oscuro con
 ## Prompts de Flow
 Para las 10 imágenes que ya existen: usar los prompts de `06-flow-desde-imagenes-parte-1.md`.
 Para las nuevas, se escriben cuando estén aprobadas (se describe solo el movimiento).
+
+---
+
+## Revisión de las imágenes (16 nov 2026)
+- Aprobadas: mercado vacío, Azael en el mercado, Ramiel y Claukia, Claukia vuela, calle, sala, pelota rebota, niño en el suelo, Ramiel con alas, Azael habla, Ramiel solo, niño agarra aire, gancho, papá corre, mamá en la puerta, papá llorando desde el niño, papá a un brazo.
+- Corregir: hilos de Azael (falta el hilo al carro), niño frente al carro (horizontal y casa con teja de barro).
+- Descartar: imagen de CapCut AI (horizontal, marca de agua y el papá pega la cara del niño a la suya, casi un abrazo).
+- Falta: Ramiel le sostiene la mirada (prompt 15 de arriba). «El niño corre» se reemplaza con los hilos de Azael.
+
+### Corrección — Hilos de Azael
+Imágenes: **imagen actual de los hilos · Azael**
+```
+Edita la imagen adjunta y conserva todo igual (calle, casa, niño, carro, Azael, colores y estilo). Cambia solo esto: la sombra negra y violeta que sale de los pies de Azael se divide en dos hilos finos de tinta viva entre negro, violeta y rojo oscuro. Uno sigue unido a la sombra del niño. El otro cruza el asfalto, sube por la llanta delantera del carro y entra por el parabrisas hasta las manos del conductor, como los hilos de una marioneta. La cara del conductor queda tapada por una sombra violeta. Azael levanta apenas dos dedos de la mano derecha.
+```
+
+### Corrección — Niño frente al carro
+Imágenes: **Niño · Calle · imagen actual del niño frente al carro**
+```
+Imagen vertical 9:16, una sola escena a página completa, sin texto. Mismo estilo de las imágenes adjuntas: fondo pintado a mano a todo color, gouache con pinceladas visibles, luz cálida de tarde; personajes en ilustración anime-cómic semirrealista con línea de tinta negra marcada. Repite la escena de la imagen adjunta del niño frente al carro, pero en vertical y en la calle de la imagen de referencia: casa color arena con techo de zinc rojo, verja negra y el árbol grande enfrente; nada de tejas de barro. Plano bajo: el niño rubio de 6 años, camisa polo celeste, pantaloneta azul oscuro y tenis blancos, se agacha estirando la mano hacia la pelota blanca con rojo en medio de la calle, concentrado en ella, sin ver el carro. A la derecha, muy cerca, el frente de un carro sedán oscuro con los faros encendidos, cuya luz empieza a llenar la imagen. Polvo en el aire. Sin choque, sin heridas.
+```
