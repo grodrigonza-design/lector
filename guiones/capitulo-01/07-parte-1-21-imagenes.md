@@ -125,3 +125,20 @@ Imágenes: **Niño · Calle · imagen actual del niño frente al carro**
 ```
 Imagen vertical 9:16, una sola escena a página completa, sin texto. Mismo estilo de las imágenes adjuntas: fondo pintado a mano a todo color, gouache con pinceladas visibles, luz cálida de tarde; personajes en ilustración anime-cómic semirrealista con línea de tinta negra marcada. Repite la escena de la imagen adjunta del niño frente al carro, pero en vertical y en la calle de la imagen de referencia: casa color arena con techo de zinc rojo, verja negra y el árbol grande enfrente; nada de tejas de barro. Plano bajo: el niño rubio de 6 años, camisa polo celeste, pantaloneta azul oscuro y tenis blancos, se agacha estirando la mano hacia la pelota blanca con rojo en medio de la calle, concentrado en ella, sin ver el carro. A la derecha, muy cerca, el frente de un carro sedán oscuro con los faros encendidos, cuya luz empieza a llenar la imagen. Polvo en el aire. Sin choque, sin heridas.
 ```
+
+## Revisión 2 (16 nov 2026)
+- Hilos de Azael: se queda la versión original de Tavo (solo une al niño y a Azael).
+- Niño frente al carro: el fondo nuevo no gustó → oscurecer el fondo (el tiempo se congela, solo luz de los faros).
+- Ramiel le sostiene la mirada: salía mirando al cielo → editar la imagen aprobada de Ramiel con alas y Azael al fondo, cambiando solo la cabeza.
+
+### Niño frente al carro — fondo oscuro
+Imágenes: **la imagen nueva del niño frente al carro**
+```
+Edita la imagen adjunta y conserva igual al niño, la pelota y el frente del carro, con el mismo estilo y la misma pose. Cambia solo el fondo: la calle, la casa, el árbol y el cielo se apagan hasta quedar casi en negro, con un tono azul violeta muy oscuro, como si el tiempo se detuviera y el mundo desapareciera alrededor. Apenas se adivinan las siluetas de la verja y del árbol. La única luz de la imagen es la de los faros del carro, cálida y blanca, que ilumina de lado al niño y a la pelota y deja un borde de luz en su pelo y su camisa. Partículas de polvo flotando quietas en el haz de luz.
+```
+
+### Ramiel le sostiene la mirada — edición
+Imágenes: **la imagen aprobada de Ramiel con alas y Azael al fondo (la del niño con la luz en el pecho)**
+```
+Edita la imagen adjunta y conserva todo igual: la calle, el niño, las alas, la ropa, la luz bajo la mano y a Azael de pie bajo el árbol al fondo. Cambia solo la cabeza del hombre de barba gris: deja de mirar al niño, levanta la cabeza y gira la cara hacia la derecha para mirar de frente, en línea recta y a la altura de los ojos, al hombre de gabardina negra bajo el árbol. No mira hacia arriba ni al cielo. Su mirada es firme y tranquila, sin rabia y sin miedo, con los ojos húmedos y la boca cerrada. Sus manos siguen sobre el niño.
+```
