@@ -142,3 +142,9 @@ Imágenes: **la imagen aprobada de Ramiel con alas y Azael al fondo (la del niñ
 ```
 Edita la imagen adjunta y conserva todo igual: la calle, el niño, las alas, la ropa, la luz bajo la mano y a Azael de pie bajo el árbol al fondo. Cambia solo la cabeza del hombre de barba gris: deja de mirar al niño, levanta la cabeza y gira la cara hacia la derecha para mirar de frente, en línea recta y a la altura de los ojos, al hombre de gabardina negra bajo el árbol. No mira hacia arriba ni al cielo. Su mirada es firme y tranquila, sin rabia y sin miedo, con los ojos húmedos y la boca cerrada. Sus manos siguen sobre el niño.
 ```
+
+## Revisión 3 (16 nov 2026) — 20 imágenes aprobadas
+Nueva: Ramiel encapuchado se detiene en seco (va antes de Claukia, como en el libro).
+Ramiel mirando hacia arriba se aprueba: «Azael habla» está en contrapicado, como visto desde Ramiel arrodillado, así que en secuencia se lee como que lo mira a él.
+
+Orden final: 1 gancho · 2 mercado vacío · 3 Azael en el mercado · 4 calle · 5 sala · 6 Ramiel se detiene · 7 Ramiel y Claukia · 8 Claukia vuela · 9 pelota rebota · 10 hilos de Azael · 11 niño frente al carro (fondo oscuro) · 12 niño en el suelo y Azael · 13 Ramiel con alas y Azael · 14 Azael habla · 15 Ramiel lo mira · 16 Ramiel solo · 17 papá corre · 18 niño agarra aire · 19 papá llorando · 20 mamá en la puerta · 21 papá a un brazo · (+2 pendientes de Tavo)
