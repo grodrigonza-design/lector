@@ -6,13 +6,13 @@ El capítulo tiene dos mitades y cuatro momentos dramáticos claros. Cada uno da
 
 | Parte | Título del video | Contenido del libro | Gancho final (cliffhanger) |
 |---|---|---|---|
-| 1 | La pelota | Mercado, el oscuro y el encapuchado, la bebé, el colibrí, el accidente, el gris le devuelve la vida | «Ella estaba con la bebé. Por eso no vino.» |
+| 1 | La pelota | Mercado, el oscuro y el encapuchado, la bebé, el colibrí, el accidente, el gris le da su luz y lo detiene antes de que se vaya | «Ella estaba con la bebé. Por eso no vino.» |
 | 2 | La cancha | Once años después: el peso, la sombra que lo acecha, conoce a Duncan, las peleas de cada tarde | La sombra retrocede cuando aparece Duncan |
 | 3 | Las alas | Duncan llega sin casa, el padrastro, «tengo mis habilidades», le salen las alas | «Creo que usted también es como yo.» |
 | 4 | Lo que somos | Celestes, oscuros, grises e híbridos; el oscuro en la esquina; «conozco a alguien» | «Yo lo soluciono.» |
 
 Lo que vende de este capítulo:
-- **Gancho fuerte de entrada**: un niño muere y un ser alado lo trae de vuelta. Funciona como primer segundo del video.
+- **Gancho fuerte de entrada**: un niño se está yendo en el asfalto y un ser de alas grises le da su luz para que no se vaya. Funciona como primer segundo del video.
 - **Misterio visual**: el hombre que daña todo a su paso, el colibrí quieto, el viento que se detiene.
 - **Herida emocional muy identificable**: el hijo que se siente reemplazado por la hermana. Eso genera comentarios y compartidos.
 - **Revelación de las alas** (Parte 3): es el momento más «viral» del capítulo; hay que guardarlo para que la serie tenga retención.
