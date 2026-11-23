@@ -29,37 +29,39 @@ texto cumple = ¡Feliz cumpleaños, {nombre}!
 
 #  Escriba el nombre como quiere que salga en pantalla.
 #  Ordenados por fecha. Si dos cumplen el mismo día, salen los dos juntos.
+#  Después de la | va el marco de su grupo: cumple-tios, cumple-primos, cumple-abuelos.
+#  Si ese marco todavía no existe, se usa el de cumpleaños normal (cumple).
 
 # Enero
-cumple 04/01 = Tío Joe
-cumple 07/01 = Prima Luci
+cumple 04/01 = Tío Joe | cumple-tios
+cumple 07/01 = Prima Luci | cumple-primos
 cumple 07/01 = José
-cumple 18/01 = Tío Andrés
+cumple 18/01 = Tío Andrés | cumple-tios
 # Febrero
-cumple 21/02 = Prima Sofi
+cumple 21/02 = Prima Sofi | cumple-primos
 # Marzo
-cumple 01/03 = Primo Samu
-cumple 03/03 = Abuela Fanny
-cumple 03/03 = Primo Loren
-cumple 05/03 = Tía Susana
+cumple 01/03 = Primo Samu | cumple-primos
+cumple 03/03 = Abuela Fanny | cumple-abuelos
+cumple 03/03 = Primo Loren | cumple-primos
+cumple 05/03 = Tía Susana | cumple-tios
 # Abril
-cumple 01/04 = Tía Silvia
-cumple 03/04 = Tía Gaby
-cumple 16/04 = Tía Andrea
+cumple 01/04 = Tía Silvia | cumple-tios
+cumple 03/04 = Tía Gaby | cumple-tios
+cumple 16/04 = Tía Andrea | cumple-tios
 cumple 22/04 = Emmanuel
 # Agosto
 cumple 11/08 = Gustavo
 # Septiembre
 cumple 05/09 = Christopher
 cumple 20/09 = Raquel
-cumple 23/09 = Tía Majo
+cumple 23/09 = Tía Majo | cumple-tios
 # Octubre
-cumple 23/10 = Abuelo Hernán
-cumple 24/10 = Prima Fio
+cumple 23/10 = Abuelo Hernán | cumple-abuelos
+cumple 24/10 = Prima Fio | cumple-primos
 # Noviembre
-cumple 18/11 = Tío Roberto
+cumple 18/11 = Tío Roberto | cumple-tios
 cumple 20/11 = Diego
-cumple 24/11 = Abuela Cheli
+cumple 24/11 = Abuela Cheli | cumple-abuelos
 
 # Para agregar a alguien más:  cumple DÍA/MES = Nombre
 

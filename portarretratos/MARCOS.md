@@ -35,14 +35,15 @@ Si el centro no sale verde liso (sale con dibujos encima o con sombra), pida:
 ## Lista de marcos (≈ 33)
 
 ### Cumpleaños (la app agrega el nombre)
-| Archivo | [TEMA] |
-|---|---|
-| `cumple.png` | globos, confeti, serpentinas y un pastel, colores de fiesta |
-| `cumple2.png` | cumpleaños elegante para adulto: globos dorados, estrellas, tonos dorado y azul marino |
-| `cumple-nino.png` | cumpleaños infantil: globos, dinosaurios, carros, colores primarios |
+| Archivo | Para | [TEMA] |
+|---|---|---|
+| `cumple-abuelos.png` | Abuela Fanny, Abuelo Hernán, Abuela Cheli | cumpleaños elegante y cálido: rosas y flores en tonos crema, dorado y vino, velas, encaje, estilo clásico y tierno |
+| `cumple-tios.png` | los tíos y tías | fiesta de cumpleaños para adultos: globos metálicos, confeti, serpentinas, copas, tonos turquesa, fucsia y dorado |
+| `cumple-primos.png` | los primos y primas | fiesta infantil y juvenil: globos de colores, piñata, dulces, estrellas, regalos, colores vivos y alegres |
+| `cumple.png` / `cumple2.png` | los demás (Emmanuel, Gustavo, Raquel, Christopher, José, Diego) | globos, confeti y un pastel / elegante en dorado y azul marino |
 
-`cumple` y `cumple2` se turnan. Para usar el infantil con alguien:
-`cumple 03/05 = Emanuel | cumple-nino`.
+Cada grupo puede tener variantes que se turnan: `cumple-tios2.png`, `cumple-primos2.png`…
+Si el marco de un grupo todavía no existe, la app usa `cumple.png`.
 
 ### Fechas especiales
 | Archivo | Fecha | [TEMA] |
