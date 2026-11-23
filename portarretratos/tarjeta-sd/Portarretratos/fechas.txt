@@ -11,6 +11,12 @@ segundos = 20
 orden = aleatorio
 orientacion = horizontal
 posicion texto = abajo
+# Cómo acomodar las fotos dentro del marco:
+#   inteligente = las verticales se ven completas con fondo difuminado a los lados,
+#                 las horizontales llenan el hueco (recomendado)
+#   completa    = todas completas, nunca se recorta nada
+#   recortar    = todas llenan el hueco aunque se corte parte de la foto
+ajuste = inteligente
 # Pantalla apagada de noche (borre la hora para dejarla siempre encendida)
 noche = 22:30-06:00
 
@@ -46,21 +52,21 @@ cumple ??/?? = Medio hermano 1
 cumple ??/?? = Medio hermano 2
 
 # ---------------- FECHAS ESPECIALES ----------------
-#  fecha DÍA/MES = marco | texto opcional
+#  fecha DÍA/MES = marco | texto opcional (borre el texto si el marco ya lo trae escrito)
 fecha 01/01 = anio-nuevo | ¡Feliz Año Nuevo!
 fecha 14/02 = san-valentin | ¡Feliz Día del Amor y la Amistad!
-fecha SEMANA_SANTA = semana-santa
-fecha 11/04 = juan-santamaria
+fecha SEMANA_SANTA = semana-santa | Semana Santa
+fecha 11/04 = juan-santamaria | Día de Juan Santamaría
 fecha 01/05 = dia-trabajador | ¡Feliz Día del Trabajador!
 fecha DIA_DEL_PADRE = dia-padre | ¡Feliz Día del Padre!
 fecha 25/07 = guanacaste | ¡Viva Guanacaste!
-fecha 02/08 = virgen-angeles
+fecha 02/08 = virgen-angeles | Día de la Virgen de los Ángeles
 fecha 15/08 = dia-madre | ¡Feliz Día de la Madre!
-fecha 31/08 = persona-negra
+fecha 31/08 = persona-negra | Día de la Persona Negra y la Cultura Afrocostarricense
 fecha 09/09 = dia-nino | ¡Feliz Día del Niño!
 fecha 15/09 = independencia | ¡Feliz Día de la Independencia!
-fecha 31/10 = halloween
-fecha 01/12 = abolicion-ejercito
+fecha 31/10 = halloween | ¡Feliz Halloween!
+fecha 01/12 = abolicion-ejercito | Día de la Abolición del Ejército
 fecha 24/12 = navidad | ¡Feliz Nochebuena!
 fecha 25/12 = navidad | ¡Feliz Navidad!
 fecha 31/12 = fin-de-anio | ¡Feliz Año Nuevo!

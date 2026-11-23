@@ -6,6 +6,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.media.ExifInterface;
@@ -66,6 +67,7 @@ public class MainActivity extends Activity {
     private int idxFoto = 0, idxMarco = 0;
     private String marcoCargado;
     private Bitmap marcoBmp;
+    private Rect marcoVentana;
     private boolean activa;
 
     private final Runnable tick = new Runnable() { public void run() { siguiente(); } };
@@ -73,6 +75,7 @@ public class MainActivity extends Activity {
 
     private static class Paso {
         Bitmap foto, marco; String texto, info, error; boolean noche, textoArriba; int segundos = 20;
+        Rect ventana; int ancho, alto;
         String orientacion;
     }
 
@@ -89,7 +92,7 @@ public class MainActivity extends Activity {
         raiz.setBackgroundColor(Color.BLACK);
         for (int i = 0; i < 2; i++) {
             fotoV[i] = new ImageView(this);
-            fotoV[i].setScaleType(ImageView.ScaleType.CENTER_CROP);
+            fotoV[i].setScaleType(ImageView.ScaleType.FIT_XY);
             fotoV[i].setAlpha(0f);
             raiz.addView(fotoV[i], lleno());
         }
@@ -166,10 +169,18 @@ public class MainActivity extends Activity {
         final boolean info = mostrarInfo;
         mostrarInfo = false;
         if (info && nocheV.getVisibility() == View.VISIBLE) despiertoHasta = System.currentTimeMillis() + 60000;
-        final DisplayMetrics dm = getResources().getDisplayMetrics();
+        View decor = getWindow().getDecorView();
+        int w = decor.getWidth(), h = decor.getHeight();
+        if (w <= 0 || h <= 0) {
+            DisplayMetrics dm = new DisplayMetrics();
+            if (Build.VERSION.SDK_INT >= 17) getWindowManager().getDefaultDisplay().getRealMetrics(dm);
+            else dm = getResources().getDisplayMetrics();
+            w = dm.widthPixels; h = dm.heightPixels;
+        }
+        final int ancho = w, alto = h;
         fondo.execute(new Runnable() {
             public void run() {
-                final Paso p = preparar(dm.widthPixels, dm.heightPixels, info);
+                final Paso p = preparar(ancho, alto, info);
                 ui.post(new Runnable() { public void run() { aplicar(p); } });
             }
         });
@@ -178,6 +189,7 @@ public class MainActivity extends Activity {
     /** Hilo de fondo: busca la carpeta, lee configuración, elige y decodifica. */
     private Paso preparar(int ancho, int alto, boolean info) {
         Paso p = new Paso();
+        p.ancho = ancho; p.alto = alto; p.ventana = new Rect(0, 0, ancho, alto);
         try {
             if (base == null || !base.isDirectory()) { base = buscarCarpeta(); configMod = -2; }
             if (base == null) {
@@ -209,16 +221,28 @@ public class MainActivity extends Activity {
             p.texto = r.texto;
             if (!r.archivos.isEmpty()) {
                 String nombre = r.archivos.get(idxMarco++ % r.archivos.size());
-                if (!nombre.equals(marcoCargado)) {
-                    marcoBmp = decodificar(new File(new File(base, "marcos"), nombre), ancho, alto, true);
-                    marcoCargado = nombre;
+                String clave = nombre + "@" + ancho + "x" + alto;
+                if (!clave.equals(marcoCargado)) {
+                    marcoBmp = null;
+                    Bitmap crudo = decodificar(new File(new File(base, "marcos"), nombre), ancho, alto, true);
+                    if (crudo != null) {
+                        marcoBmp = Bitmap.createScaledBitmap(crudo, ancho, alto, true).copy(Bitmap.Config.ARGB_8888, true);
+                        if (crudo != marcoBmp) crudo.recycle();
+                        marcoVentana = Fotos.prepararMarco(marcoBmp);
+                    }
+                    marcoCargado = clave;
                 }
                 p.marco = marcoBmp;
             } else { marcoCargado = null; marcoBmp = null; }
+            p.ventana = marcoBmp != null ? marcoVentana : new Rect(0, 0, ancho, alto);
 
             if (idxFoto >= fotos.size()) { idxFoto = 0; ultimoEscaneo = 0; recargarSiHaceFalta(); }
             File foto = fotos.get(idxFoto++ % fotos.size());
-            p.foto = decodificar(foto, ancho, alto, false);
+            Bitmap original = decodificar(foto, ancho, alto, false);
+            if (original != null) {
+                p.foto = Fotos.componer(original, p.ventana, ancho, alto, agenda.ajuste);
+                original.recycle();
+            }
 
             if (info) {
                 SimpleDateFormat f = new SimpleDateFormat("EEEE d 'de' MMMM yyyy, HH:mm", new Locale("es"));
@@ -267,12 +291,15 @@ public class MainActivity extends Activity {
 
             if (p.texto != null && !p.texto.isEmpty()) {
                 textoV.setText(p.texto);
-                int altoPantalla = Math.min(getResources().getDisplayMetrics().heightPixels,
-                        getResources().getDisplayMetrics().widthPixels);
+                int altoPantalla = Math.min(p.alto, p.ancho);
                 textoV.setTextSize(TypedValue.COMPLEX_UNIT_PX, altoPantalla * 0.075f);
+                textoV.setMaxWidth((int) (p.ventana.width() * 0.92f));
                 FrameLayout.LayoutParams lt = (FrameLayout.LayoutParams) textoV.getLayoutParams();
                 lt.gravity = (p.textoArriba ? Gravity.TOP : Gravity.BOTTOM) | Gravity.CENTER_HORIZONTAL;
-                lt.topMargin = lt.bottomMargin = (int) (altoPantalla * 0.07f);
+                // dentro del hueco del marco, un poco separado del borde
+                int sep = (int) (altoPantalla * 0.035f);
+                lt.topMargin = p.ventana.top + sep;
+                lt.bottomMargin = p.alto - p.ventana.bottom + sep;
                 textoV.setLayoutParams(lt);
                 textoV.setVisibility(View.VISIBLE);
             } else {

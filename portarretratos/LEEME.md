@@ -28,22 +28,16 @@ Portarretratos/
 
 Los cambios en la SD (fotos, marcos, `fechas.txt`) se leen solos; no hace falta reinstalar.
 
-## 3. Los marcos
+## 3. Los marcos y las fotos
 
-- Formato **PNG** con el **centro transparente**, tamaño **1024 × 600** (horizontal).
+**Cómo hacer los marcos con ChatGPT: vea `MARCOS.md`** (prompt y lista completa).
+
+- PNG horizontal con el **centro verde puro (#00FF00)** o transparente; la app abre el hueco sola.
 - El nombre del archivo es el que se escribe en `fechas.txt`, sin `.png`.
 - Para que varios marcos se turnen: `navidad.png`, `navidad2.png`, `navidad3.png`…
 - Si para una fecha no hay marco todavía, se usa el del mes y, si no, `normal.png`.
-
-Marcos que menciona el `fechas.txt` de ejemplo:
-
-| Tipo | Archivos |
-|---|---|
-| Cumpleaños | `cumple` (la app escribe "¡Feliz cumpleaños, Nombre!") |
-| Fechas | `anio-nuevo`, `san-valentin`, `semana-santa`, `juan-santamaria`, `dia-trabajador`, `dia-padre`, `guanacaste`, `virgen-angeles`, `dia-madre`, `persona-negra`, `dia-nino`, `independencia`, `halloween`, `abolicion-ejercito`, `navidad`, `fin-de-anio` |
-| Temporadas | `navidad` (todo diciembre), `mes-patrio` (1–15 de septiembre) |
-| Meses | `enero` … `noviembre` |
-| Por defecto | `normal` |
+- **Fotos verticales**: se ven completas en el hueco del marco con la misma foto difuminada
+  a los lados. Las horizontales llenan el hueco. Se cambia con `ajuste =` en `fechas.txt`.
 
 Los 4 marcos que vienen ahora (`normal`, `noviembre`, `navidad`, `cumple`) son **de prueba**.
 
