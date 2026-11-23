@@ -1,0 +1,37 @@
+name: Portarretratos (APK)
+
+on:
+  push:
+    paths:
+      - 'portarretratos/**'
+      - '.github/workflows/portarretratos.yml'
+  workflow_dispatch:
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: portarretratos
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+      - name: Compilar
+        run: gradle assembleDebug --no-daemon --stacktrace
+      - name: Preparar descarga
+        run: |
+          mkdir -p salida
+          cp app/build/outputs/apk/debug/app-debug.apk salida/Portarretratos.apk
+          cp -r tarjeta-sd/Portarretratos salida/
+          rm -f salida/Portarretratos/fotos/.gitkeep
+          cp LEEME.md salida/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Portarretratos
+          path: portarretratos/salida/

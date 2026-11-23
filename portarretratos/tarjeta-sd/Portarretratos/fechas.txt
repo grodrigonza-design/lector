@@ -1,0 +1,88 @@
+# =====================================================================
+#  PORTARRETRATOS - lista de fechas
+#  Las líneas que empiezan con # son comentarios: la app las ignora.
+#  Cada "marco" es el nombre de un archivo en la carpeta marcos, sin el .png
+#  Para varios marcos que se turnan: navidad.png, navidad2.png, navidad3.png...
+#  Si falta el archivo de un marco, la app usa el del mes o el normal.
+# =====================================================================
+
+# ---------------- AJUSTES ----------------
+segundos = 20
+orden = aleatorio
+orientacion = horizontal
+posicion texto = abajo
+# Pantalla apagada de noche (borre la hora para dejarla siempre encendida)
+noche = 22:30-06:00
+
+# ---------------- CUMPLEAÑOS ----------------
+#  cumple DÍA/MES = Nombre
+#  Para un marco especial de esa persona:  cumple 03/05 = Emanuel | cumple-emanuel
+#  Las líneas con ??/?? se ignoran hasta que les ponga la fecha.
+marco cumple = cumple
+texto cumple = ¡Feliz cumpleaños, {nombre}!
+
+#  Escriba el nombre como quiere que salga en pantalla (ej. "Abuelita", "Tío Juan").
+#  Cambie "Papá" por su nombre si lo prefiere.
+cumple 11/08 = Papá
+cumple ??/?? = Esposa
+cumple ??/?? = Emanuel
+cumple ??/?? = Mi mamá
+cumple ??/?? = Mi papá
+cumple ??/?? = Suegra
+cumple ??/?? = Hermano 1
+cumple ??/?? = Hermano 2
+cumple ??/?? = Hermano 3
+cumple ??/?? = Hermano 4
+cumple ??/?? = Hermano 5
+cumple ??/?? = Hermano 6
+cumple ??/?? = Andrea
+cumple ??/?? = Sobrino 1
+cumple ??/?? = Sobrino 2
+cumple ??/?? = Sobrino 3
+cumple ??/?? = Sobrino 4
+cumple ??/?? = Sobrino 5
+cumple ??/?? = Tía de mi esposa
+cumple ??/?? = Medio hermano 1
+cumple ??/?? = Medio hermano 2
+
+# ---------------- FECHAS ESPECIALES ----------------
+#  fecha DÍA/MES = marco | texto opcional
+fecha 01/01 = anio-nuevo | ¡Feliz Año Nuevo!
+fecha 14/02 = san-valentin | ¡Feliz Día del Amor y la Amistad!
+fecha SEMANA_SANTA = semana-santa
+fecha 11/04 = juan-santamaria
+fecha 01/05 = dia-trabajador | ¡Feliz Día del Trabajador!
+fecha DIA_DEL_PADRE = dia-padre | ¡Feliz Día del Padre!
+fecha 25/07 = guanacaste | ¡Viva Guanacaste!
+fecha 02/08 = virgen-angeles
+fecha 15/08 = dia-madre | ¡Feliz Día de la Madre!
+fecha 31/08 = persona-negra
+fecha 09/09 = dia-nino | ¡Feliz Día del Niño!
+fecha 15/09 = independencia | ¡Feliz Día de la Independencia!
+fecha 31/10 = halloween
+fecha 01/12 = abolicion-ejercito
+fecha 24/12 = navidad | ¡Feliz Nochebuena!
+fecha 25/12 = navidad | ¡Feliz Navidad!
+fecha 31/12 = fin-de-anio | ¡Feliz Año Nuevo!
+
+# ---------------- TEMPORADAS ----------------
+#  temporada DESDE-HASTA = marco
+temporada 01/12-31/12 = navidad
+temporada 01/09-15/09 = mes-patrio
+
+# ---------------- MARCO DE CADA MES ----------------
+mes enero = enero
+mes febrero = febrero
+mes marzo = marzo
+mes abril = abril
+mes mayo = mayo
+mes junio = junio
+mes julio = julio
+mes agosto = agosto
+mes septiembre = septiembre
+mes octubre = octubre
+mes noviembre = noviembre
+mes diciembre = navidad
+
+# Si no hay nada más:
+marco normal = normal

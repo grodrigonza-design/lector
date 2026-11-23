@@ -1,0 +1,27 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'cr.portarretratos'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'cr.portarretratos'
+        minSdk 19          // Android 4.4 (la tablet Digiland DL701Q)
+        //noinspection ExpiredTargetSdkVersion: la app es solo para esa tablet; así no pide permisos en tiempo de ejecución
+        targetSdk 22
+        versionCode 1
+        versionName '1.0'
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    lint {
+        abortOnError false
+        checkReleaseBuilds false
+    }
+}
