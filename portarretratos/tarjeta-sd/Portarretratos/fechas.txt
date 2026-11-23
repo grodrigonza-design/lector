@@ -45,6 +45,7 @@ cumple 05/03 = Tía Susana
 # Abril
 cumple 01/04 = Tía Silvia
 cumple 03/04 = Tía Gaby
+cumple 16/04 = Tía Andrea
 cumple 22/04 = Emmanuel
 # Agosto
 cumple 11/08 = Gustavo
@@ -60,8 +61,7 @@ cumple 18/11 = Tío Roberto
 cumple 20/11 = Diego
 cumple 24/11 = Abuela Cheli
 
-# Pendientes (ponga la fecha y el nombre cuando los averigüe)
-cumple ??/?? = Andrea
+# Para agregar a alguien más:  cumple DÍA/MES = Nombre
 
 # ---------------- FECHAS ESPECIALES ----------------
 #  fecha DÍA/MES = marco | texto opcional (borre el texto si el marco ya lo trae escrito)
