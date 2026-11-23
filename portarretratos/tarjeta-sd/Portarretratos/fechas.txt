@@ -27,29 +27,41 @@ noche = 22:30-06:00
 marco cumple = cumple
 texto cumple = ¡Feliz cumpleaños, {nombre}!
 
-#  Escriba el nombre como quiere que salga en pantalla (ej. "Abuelita", "Tío Juan").
-#  Cambie "Papá" por su nombre si lo prefiere.
-cumple 11/08 = Papá
-cumple ??/?? = Esposa
-cumple ??/?? = Emanuel
-cumple ??/?? = Mi mamá
-cumple ??/?? = Mi papá
-cumple ??/?? = Suegra
-cumple ??/?? = Hermano 1
-cumple ??/?? = Hermano 2
-cumple ??/?? = Hermano 3
-cumple ??/?? = Hermano 4
-cumple ??/?? = Hermano 5
-cumple ??/?? = Hermano 6
+#  Escriba el nombre como quiere que salga en pantalla.
+#  Ordenados por fecha. Si dos cumplen el mismo día, salen los dos juntos.
+
+# Enero
+cumple 04/01 = Tío Joe
+cumple 07/01 = Prima Luci
+cumple 07/01 = José
+cumple 18/01 = Tío Andrés
+# Febrero
+cumple 21/02 = Prima Sofi
+# Marzo
+cumple 01/03 = Primo Samu
+cumple 03/03 = Abuela Fanny
+cumple 03/03 = Primo Loren
+cumple 05/03 = Tía Susana
+# Abril
+cumple 01/04 = Tía Silvia
+cumple 22/04 = Emmanuel
+# Agosto
+cumple 11/08 = Gustavo
+# Septiembre
+cumple 05/09 = Christopher
+cumple 20/09 = Raquel
+cumple 23/09 = Tía Majo
+# Octubre
+cumple 23/10 = Abuelo Hernán
+cumple 24/10 = Prima Fio
+# Noviembre
+cumple 18/11 = Tío Roberto
+cumple 20/11 = Diego
+cumple 24/11 = Abuela Cheli
+
+# Pendientes (ponga la fecha y el nombre cuando los averigüe)
 cumple ??/?? = Andrea
-cumple ??/?? = Sobrino 1
-cumple ??/?? = Sobrino 2
-cumple ??/?? = Sobrino 3
-cumple ??/?? = Sobrino 4
-cumple ??/?? = Sobrino 5
-cumple ??/?? = Tía de mi esposa
-cumple ??/?? = Medio hermano 1
-cumple ??/?? = Medio hermano 2
+cumple ??/?? = (falta uno)
 
 # ---------------- FECHAS ESPECIALES ----------------
 #  fecha DÍA/MES = marco | texto opcional (borre el texto si el marco ya lo trae escrito)
