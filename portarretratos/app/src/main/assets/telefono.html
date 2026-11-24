@@ -62,6 +62,18 @@ h2{font-size:17px;margin:0 0 4px}
 <header><span class="marco" aria-hidden="true"></span><h1>Portarretratos</h1></header>
 <main>
 
+<!-- Navegador muy viejo (por ejemplo, el de la misma tablet) -->
+<section id="viejo" class="card">
+  <h2>Abra esta página desde su teléfono</h2>
+  <p class="nota">Este navegador es muy antiguo para la página del portarretratos.
+    Escriba esta misma dirección en el navegador de su teléfono (conectado al mismo WiFi).</p>
+</section>
+<script>
+  if (window.fetch && window.Promise && window.NodeList && NodeList.prototype.forEach) {
+    document.getElementById('viejo').style.display = 'none';
+  }
+</script>
+
 <!-- Entrar -->
 <section id="entrar" class="card oculto">
   <h2>Escriba el PIN</h2>
