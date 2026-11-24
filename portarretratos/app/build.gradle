@@ -20,6 +20,14 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
 
+    // Los marcos y el fechas.txt de la carpeta tarjeta-sd van también dentro de la app,
+    // para que funcione sin tarjeta SD (todo se maneja desde el teléfono).
+    sourceSets {
+        main {
+            assets.srcDirs += ['../tarjeta-sd']
+        }
+    }
+
     lint {
         abortOnError false
         checkReleaseBuilds false

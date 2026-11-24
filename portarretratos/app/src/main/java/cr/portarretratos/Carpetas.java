@@ -66,6 +66,8 @@ final class Carpetas {
         for (File p : propias()) candidatos.add(new File(p, "fechas.txt"));
         for (File f : candidatos)
             if (f.isFile() && (mejor == null || f.lastModified() > mejor.lastModified())) mejor = f;
+        if (mejor == null) // sin tarjeta ni cambios desde el teléfono: el que viene dentro de la app
+            for (File pr : propias()) { File f = new File(pr, INCLUIDO_FECHAS); if (f.isFile()) return f; }
         return mejor;
     }
 
@@ -79,8 +81,9 @@ final class Carpetas {
 
     List<File> carpetasMarcos() {
         List<File> res = new ArrayList<File>();
-        if (base != null) res.add(new File(base, "marcos"));
-        for (File p : propias()) res.add(new File(p, "marcos")); // los del teléfono ganan si se llaman igual
+        for (File p : propias()) res.add(new File(p, INCLUIDO_MARCOS)); // los que vienen en la app
+        if (base != null) res.add(new File(base, "marcos"));             // los de la tarjeta ganan
+        for (File p : propias()) res.add(new File(p, "marcos"));         // y los del teléfono ganan a todos
         return res;
     }
 
@@ -118,6 +121,49 @@ final class Carpetas {
             for (File c : carpetas) if (ruta.startsWith(c.getCanonicalPath() + File.separator)) return true;
         } catch (IOException ignored) { }
         return false;
+    }
+
+    // ------------------------------------------------------------------ lo que viene dentro de la app
+
+    static final String INCLUIDO_FECHAS = "fechas-incluido.txt";
+    static final String INCLUIDO_MARCOS = "marcos-incluidos";
+
+    /**
+     * Copia los marcos y el fechas.txt que vienen dentro de la app, para que funcione
+     * aunque no haya tarjeta SD (todo se maneja desde el teléfono). Se repite al actualizar la app.
+     */
+    void copiarIncluidos() {
+        try {
+            File destino = propiaEscritura();
+            long version = ctx.getPackageManager().getPackageInfo(ctx.getPackageName(), 0).lastUpdateTime;
+            File marca = new File(destino, ".incluidos-" + version);
+            if (marca.exists()) return;
+            android.content.res.AssetManager am = ctx.getAssets();
+            File dirMarcos = new File(destino, INCLUIDO_MARCOS);
+            dirMarcos.mkdirs();
+            String[] marcos = am.list("Portarretratos/marcos");
+            if (marcos != null) for (String n : marcos)
+                if (esImagen(n)) copiarAsset(am, "Portarretratos/marcos/" + n, new File(dirMarcos, n));
+            copiarAsset(am, "Portarretratos/fechas.txt", new File(destino, INCLUIDO_FECHAS));
+            marca.createNewFile();
+        } catch (Exception ignored) {
+            // si falla, la app sigue funcionando con la tarjeta / el teléfono
+        }
+    }
+
+    private static void copiarAsset(android.content.res.AssetManager am, String desde, File hacia) throws IOException {
+        java.io.InputStream in = am.open(desde);
+        try {
+            File tmp = new File(hacia.getAbsolutePath() + ".tmp");
+            FileOutputStream out = new FileOutputStream(tmp);
+            try {
+                byte[] buf = new byte[16384];
+                int n;
+                while ((n = in.read(buf)) > 0) out.write(buf, 0, n);
+            } finally { out.close(); }
+            if (hacia.exists()) hacia.delete();
+            tmp.renameTo(hacia);
+        } finally { in.close(); }
     }
 
     // ------------------------------------------------------------------ fotos ocultas

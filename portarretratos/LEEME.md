@@ -28,6 +28,14 @@ Portarretratos/
 
 Los cambios en la SD (fotos, marcos, `fechas.txt`) se leen solos; no hace falta reinstalar.
 
+## Sin tarjeta SD ni cable (todo desde el teléfono)
+
+La app trae adentro los marcos y el `fechas.txt`, así que funciona sin la carpeta de la tarjeta:
+1. En la tablet, abra el navegador y descargue el APK:
+   `github.com/grodrigonza-design/lector/releases` → **Portarretratos.apk**. Instálelo.
+2. Abra la app: muestra la dirección **http://192.168.x.x:8080**.
+3. Ábrala en el teléfono (mismo WiFi), **cree su PIN** y suba fotos.
+
 ## Subir fotos desde el teléfono (WiFi de la casa)
 
 1. En `fechas.txt` de la tarjeta, quite el `#` de la línea `# pin = 0000` y ponga su PIN.

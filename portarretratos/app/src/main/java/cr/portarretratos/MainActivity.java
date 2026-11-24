@@ -170,6 +170,7 @@ public class MainActivity extends Activity {
     // ------------------------------------------------------------------ ciclo
 
     private volatile long despiertoHasta = 0;
+    private boolean incluidosListos = false;
 
     private void siguiente() {
         ui.removeCallbacks(tick);
@@ -200,15 +201,16 @@ public class MainActivity extends Activity {
         p.ancho = ancho; p.alto = alto; p.ventana = new Rect(0, 0, ancho, alto); p.textoHasta = alto; p.textoAncho = ancho;
         try {
             if (base == null || !base.isDirectory()) { base = buscarCarpeta(); carpetas.base = base; configMod = -2; }
+            if (!incluidosListos) { carpetas.copiarIncluidos(); incluidosListos = true; }
             recargarSiHaceFalta();
             String web = Servidor.direccion();
-            String desdeTelefono = web != null && agenda.pin != null
-                    ? "\n\nO suba fotos desde el teléfono (mismo WiFi):\n" + web : "";
-            if (base == null && fotos.isEmpty()) {
-                p.error = "No encuentro la carpeta \"" + CARPETA + "\".\n\n"
-                        + "Ponga en la tarjeta SD una carpeta llamada " + CARPETA + "\n"
-                        + "con las subcarpetas  fotos  y  marcos." + desdeTelefono
-                        + "\n\nReintentando cada 10 segundos…";
+            if (fotos.isEmpty()) {
+                p.error = "¡Hola! Todavía no hay fotos.\n\n"
+                        + (web != null
+                            ? "Desde el teléfono (conectado al mismo WiFi),\nabra en el navegador:\n\n" + web
+                              + (agenda.pin == null ? "\n\nAhí mismo podrá crear su PIN." : "")
+                            : "Conecte la tablet al WiFi para subir fotos desde el teléfono.")
+                        + "\n\nO copie fotos en la carpeta " + CARPETA + "/fotos\n(tarjeta SD o memoria interna).";
                 p.segundos = 10;
                 return p;
             }
@@ -220,12 +222,6 @@ public class MainActivity extends Activity {
             if (agenda.esNoche(ahora) && System.currentTimeMillis() > despiertoHasta) {
                 p.noche = true;
                 p.segundos = 60;
-                return p;
-            }
-            if (fotos.isEmpty()) {
-                p.error = "No hay fotos todavía.\n\nCópielas en la carpeta  " + CARPETA + "/fotos  de la tarjeta SD."
-                        + desdeTelefono;
-                p.segundos = 30;
                 return p;
             }
 
@@ -268,8 +264,7 @@ public class MainActivity extends Activity {
                   .append("Foto ").append(idxFoto).append(" de ").append(fotos.size()).append(": ").append(foto.getName()).append('\n')
                   .append("Marcos: ").append(marcos.size()).append('\n')
                   .append("Carpeta: ").append(base != null ? base.getAbsolutePath() : "(no está la tarjeta)");
-                if (agenda.pin == null) sb.append("\nTeléfono: agregue  pin = ...  en fechas.txt para activarlo");
-                else if (web != null) sb.append("\n📱 Desde el teléfono: ").append(web);
+                if (web != null) sb.append("\n📱 Desde el teléfono: ").append(web).append(agenda.pin == null ? "  (cree su PIN ahí)" : "");
                 else sb.append("\n📱 Teléfono: la tablet no está conectada al WiFi");
                 for (String a : agenda.avisos) sb.append("\n⚠ ").append(a);
                 p.info = sb.toString();

@@ -164,6 +164,7 @@ final class Servidor {
                     "Set-Cookie: pr=" + token(actual) + "; Max-Age=31536000; Path=/; HttpOnly\r\n");
             return;
         }
+        if (r.equals("/api/crear-pin") && p.metodo.equals("POST")) { crearPin(p, out); return; }
         if (!r.startsWith("/api/")) { responder(out, 404, "text/plain", "No existe".getBytes("UTF-8"), null); return; }
 
         // Desde aquí, todo pide haber entrado con el PIN.
@@ -328,6 +329,25 @@ final class Servidor {
                 : "Set-Cookie: pr=" + token(a.pin) + "; Max-Age=31536000; Path=/; HttpOnly\r\n";
         pin = a.pin;
         json(out, 200, sb.append("]}").toString(), cookie);
+    }
+
+    /** Primera vez (todavía no hay PIN): se crea desde el teléfono y se guarda en fechas.txt. */
+    private synchronized void crearPin(Peticion p, OutputStream out) throws Exception {
+        if (pin != null) { json(out, 409, "{\"error\":\"Ya hay un PIN.\"}", null); return; }
+        String nuevo = new String(leerCuerpo(p, 100), "UTF-8").trim();
+        if (!nuevo.matches("\\d{4,12}")) { json(out, 400, "{\"error\":\"El PIN debe tener de 4 a 12 números.\"}", null); return; }
+        File actual = carpetas.fechasActual();
+        List<String> lineas = new ArrayList<String>();
+        if (actual != null) lineas.addAll(MainActivity.leerLineas(actual));
+        boolean puesto = false;
+        for (int i = 0; i < lineas.size(); i++) {
+            if (lineas.get(i).trim().matches("#?\\s*pin\\s*=.*")) { lineas.set(i, "pin = " + nuevo); puesto = true; break; }
+        }
+        if (!puesto) lineas.add(0, "pin = " + nuevo);
+        escribir(carpetas.fechasTelefono(), unirLineas(lineas).getBytes("UTF-8"));
+        pin = nuevo;
+        carpetas.cambio = true;
+        json(out, 200, "{\"ok\":true}", "Set-Cookie: pr=" + token(nuevo) + "; Max-Age=31536000; Path=/; HttpOnly\r\n");
     }
 
     // ------------------------------------------------------------------ HTTP

@@ -74,8 +74,14 @@ h2{font-size:17px;margin:0 0 4px}
 </section>
 
 <section id="sinPin" class="card oculto">
-  <h2>Acceso desde el teléfono apagado</h2>
-  <p class="nota">Para activarlo, agregue una línea como <b>pin = 1234</b> en el archivo fechas.txt de la tarjeta SD.</p>
+  <h2>Bienvenido: cree su PIN</h2>
+  <p class="nota">Solo la primera vez. Lo va a pedir para entrar desde cualquier teléfono (de 4 a 12 números).</p>
+  <form id="formCrear">
+    <input id="pinNuevo" type="password" inputmode="numeric" autocomplete="new-password" maxlength="12" required placeholder="PIN">
+    <input id="pinNuevo2" type="password" inputmode="numeric" autocomplete="new-password" maxlength="12" required placeholder="Repítalo" style="margin-top:10px">
+    <button class="grande" style="margin-top:12px">Crear PIN y entrar</button>
+  </form>
+  <div id="msgCrear" class="msg error"></div>
 </section>
 
 <!-- App -->
@@ -164,6 +170,20 @@ $('formPin').addEventListener('submit', function (e) {
     else if (r.status === 429) aviso($('msgPin'), 'Demasiados intentos. Espere 5 minutos.', 'error');
     else aviso($('msgPin'), 'PIN incorrecto.', 'error');
   }).catch(function () { aviso($('msgPin'), 'No hay conexión con la tablet.', 'error'); });
+});
+
+$('formCrear').addEventListener('submit', function (e) {
+  e.preventDefault();
+  var a = $('pinNuevo').value, b = $('pinNuevo2').value;
+  if (!/^\d{4,12}$/.test(a)) { aviso($('msgCrear'), 'Use de 4 a 12 números.', 'error'); return; }
+  if (a !== b) { aviso($('msgCrear'), 'Los dos PIN no son iguales.', 'error'); return; }
+  fetch('/api/crear-pin', { method: 'POST', body: a, credentials: 'same-origin' })
+    .then(function (r) { return r.json().then(function (j) { return [r.ok, j]; }); })
+    .then(function (res) {
+      if (res[0]) { aviso($('msgCrear'), ''); iniciar(); }
+      else if (res[1].error === 'Ya hay un PIN.') mostrar('entrar');
+      else aviso($('msgCrear'), res[1].error || 'No se pudo crear.', 'error');
+    }).catch(function () { aviso($('msgCrear'), 'No hay conexión con la tablet.', 'error'); });
 });
 
 /* ---------- pestañas ---------- */
