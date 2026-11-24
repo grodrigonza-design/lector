@@ -51,6 +51,19 @@ public final class Hueco {
         }
         // Un "hueco" de menos del 15 % de la imagen no es un hueco: probablemente el centro es parte del dibujo.
         if (total < w * h * 0.15) return null;
+        // Borde real del hueco: filas/columnas con buena parte abierta. Así no cuentan
+        // filtraciones finas del verde hacia adornos verdes del marco (montañas, hojas…).
+        int[] porFila = new int[h], porCol = new int[w];
+        for (int y = y0; y <= y1; y++)
+            for (int x = x0; x <= x1; x++)
+                if (visto[y * w + x] != 0) { porFila[y]++; porCol[x]++; }
+        int maxFila = 0, maxCol = 0;
+        for (int v : porFila) maxFila = Math.max(maxFila, v);
+        for (int v : porCol) maxCol = Math.max(maxCol, v);
+        while (y0 < y1 && porFila[y0] < maxFila * 0.5) y0++;
+        while (y1 > y0 && porFila[y1] < maxFila * 0.5) y1--;
+        while (x0 < x1 && porCol[x0] < maxCol * 0.5) x0++;
+        while (x1 > x0 && porCol[x1] < maxCol * 0.5) x1--;
         int[] seguro = zonaLibre(px, w, x0, y0, x1 + 1, y1 + 1);
         return new int[]{x0, y0, x1 + 1, y1 + 1, seguro[0], seguro[1]};
     }
