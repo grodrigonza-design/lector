@@ -28,6 +28,23 @@ Portarretratos/
 
 Los cambios en la SD (fotos, marcos, `fechas.txt`) se leen solos; no hace falta reinstalar.
 
+## Subir fotos desde el teléfono (WiFi de la casa)
+
+1. En `fechas.txt` de la tarjeta, quite el `#` de la línea `# pin = 0000` y ponga su PIN.
+2. Toque la pantalla del portarretratos: abajo de la información aparece
+   **📱 Desde el teléfono: http://192.168.x.x:8080** (la tablet debe estar en el WiFi).
+3. Abra esa dirección en el navegador del teléfono y escriba el PIN.
+4. Ahí puede **subir fotos**, **quitar fotos**, **subir marcos** y **editar las fechas**.
+
+Notas:
+- Solo funciona con el teléfono en el mismo WiFi que la tablet.
+- Las fotos subidas desde el teléfono se guardan en la tarjeta, en
+  `Android/data/cr.portarretratos/files/fotos` (Android 4.4 no deja a las apps escribir en otro lado).
+  **Si se desinstala la app, Android borra esa carpeta.** Actualizar la app (instalar encima) no borra nada.
+- Las fotos de la carpeta `Portarretratos/fotos` no se pueden borrar desde el teléfono en Android 4.4:
+  se **ocultan** del portarretratos (la lista está en `ocultas.txt` de esa misma carpeta).
+- Si cambia las fechas desde el teléfono, la app usa la versión más nueva entre la del teléfono y la de la tarjeta.
+
 ## 3. Los marcos y las fotos
 
 **Cómo hacer los marcos con ChatGPT: vea `MARCOS.md`** (prompt y lista completa).

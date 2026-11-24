@@ -60,6 +60,9 @@ public class MainActivity extends Activity {
 
     // Estado (solo se toca desde el hilo de fondo)
     private File base;
+    private Carpetas carpetas;
+    private Servidor servidor;
+    private final java.util.Map<String, File> marcosArch = new java.util.HashMap<String, File>();
     private Agenda agenda = new Agenda();
     private long configMod = -2, ultimoEscaneo = 0;
     private final List<File> fotos = new ArrayList<File>();
@@ -137,13 +140,17 @@ public class MainActivity extends Activity {
         });
         setContentView(raiz);
         pantallaCompleta();
+
+        carpetas = new Carpetas(this);
+        servidor = new Servidor(this, carpetas);
+        servidor.iniciar();
     }
 
-    private volatile boolean mostrarInfo = false;
+    private volatile boolean mostrarInfo = true; // al abrir, mostrar la dirección para el teléfono
 
     @Override protected void onResume() { super.onResume(); activa = true; siguiente(); }
     @Override protected void onPause() { super.onPause(); activa = false; ui.removeCallbacks(tick); }
-    @Override protected void onDestroy() { super.onDestroy(); fondo.shutdownNow(); }
+    @Override protected void onDestroy() { super.onDestroy(); fondo.shutdownNow(); if (servidor != null) servidor.detener(); }
 
     @Override
     public void onWindowFocusChanged(boolean foco) {
@@ -192,15 +199,19 @@ public class MainActivity extends Activity {
         Paso p = new Paso();
         p.ancho = ancho; p.alto = alto; p.ventana = new Rect(0, 0, ancho, alto); p.textoHasta = alto; p.textoAncho = ancho;
         try {
-            if (base == null || !base.isDirectory()) { base = buscarCarpeta(); configMod = -2; }
-            if (base == null) {
+            if (base == null || !base.isDirectory()) { base = buscarCarpeta(); carpetas.base = base; configMod = -2; }
+            recargarSiHaceFalta();
+            String web = Servidor.direccion();
+            String desdeTelefono = web != null && agenda.pin != null
+                    ? "\n\nO suba fotos desde el teléfono (mismo WiFi):\n" + web : "";
+            if (base == null && fotos.isEmpty()) {
                 p.error = "No encuentro la carpeta \"" + CARPETA + "\".\n\n"
                         + "Ponga en la tarjeta SD una carpeta llamada " + CARPETA + "\n"
-                        + "con las subcarpetas  fotos  y  marcos.\n\nReintentando cada 10 segundos…";
+                        + "con las subcarpetas  fotos  y  marcos." + desdeTelefono
+                        + "\n\nReintentando cada 10 segundos…";
                 p.segundos = 10;
                 return p;
             }
-            recargarSiHaceFalta();
             p.segundos = agenda.segundos;
             p.orientacion = agenda.orientacion;
             p.textoArriba = agenda.textoArriba;
@@ -212,8 +223,8 @@ public class MainActivity extends Activity {
                 return p;
             }
             if (fotos.isEmpty()) {
-                p.error = "No hay fotos en\n" + new File(base, "fotos").getAbsolutePath()
-                        + "\n\nCopie ahí sus fotos (.jpg o .png).";
+                p.error = "No hay fotos todavía.\n\nCópielas en la carpeta  " + CARPETA + "/fotos  de la tarjeta SD."
+                        + desdeTelefono;
                 p.segundos = 30;
                 return p;
             }
@@ -225,7 +236,8 @@ public class MainActivity extends Activity {
                 String clave = nombre + "@" + ancho + "x" + alto;
                 if (!clave.equals(marcoCargado)) {
                     marcoBmp = null;
-                    Bitmap crudo = decodificar(new File(new File(base, "marcos"), nombre), ancho, alto, true);
+                    File archMarco = marcosArch.get(nombre);
+                    Bitmap crudo = archMarco == null ? null : decodificar(archMarco, ancho, alto, true);
                     if (crudo != null) {
                         marcoBmp = Bitmap.createScaledBitmap(crudo, ancho, alto, true).copy(Bitmap.Config.ARGB_8888, true);
                         if (crudo != marcoBmp) crudo.recycle();
@@ -254,8 +266,11 @@ public class MainActivity extends Activity {
                 sb.append(f.format(ahora.getTime())).append('\n')
                   .append("Marco: ").append(r.motivo).append(marcoCargado != null ? " → " + marcoCargado : "").append('\n')
                   .append("Foto ").append(idxFoto).append(" de ").append(fotos.size()).append(": ").append(foto.getName()).append('\n')
-                  .append("Marcos en la tarjeta: ").append(marcos.size()).append('\n')
-                  .append("Carpeta: ").append(base.getAbsolutePath());
+                  .append("Marcos: ").append(marcos.size()).append('\n')
+                  .append("Carpeta: ").append(base != null ? base.getAbsolutePath() : "(no está la tarjeta)");
+                if (agenda.pin == null) sb.append("\nTeléfono: agregue  pin = ...  en fechas.txt para activarlo");
+                else if (web != null) sb.append("\n📱 Desde el teléfono: ").append(web);
+                else sb.append("\n📱 Teléfono: la tablet no está conectada al WiFi");
                 for (String a : agenda.avisos) sb.append("\n⚠ ").append(a);
                 p.info = sb.toString();
             }
@@ -324,41 +339,32 @@ public class MainActivity extends Activity {
     // ------------------------------------------------------------------ archivos
 
     private void recargarSiHaceFalta() {
-        File conf = new File(base, "fechas.txt");
-        long mod = conf.exists() ? conf.lastModified() : -1;
+        if (carpetas.cambio) { carpetas.cambio = false; ultimoEscaneo = 0; }
+        File conf = carpetas.fechasActual();
+        long mod = conf == null ? -1 : conf.lastModified() * 31 + conf.getAbsolutePath().hashCode();
         if (mod != configMod) {
             configMod = mod;
-            agenda = mod < 0 ? new Agenda() : Agenda.leer(leerLineas(conf));
+            agenda = conf == null ? new Agenda() : Agenda.leer(leerLineas(conf));
+            servidor.pin = agenda.pin;
             ultimoEscaneo = 0;
         }
-        if (System.currentTimeMillis() - ultimoEscaneo < REESCANEO_MS && !fotos.isEmpty()) return;
-        ultimoEscaneo = System.currentTimeMillis();
+        long ahora = System.currentTimeMillis();
+        if (ahora - ultimoEscaneo < REESCANEO_MS && !fotos.isEmpty()) return;
+        ultimoEscaneo = ahora;
 
+        List<File> todas = carpetas.fotos();
+        if (agenda.aleatorio) Collections.shuffle(todas);
+        else Collections.sort(todas);
+        // Las recién subidas (últimos 15 minutos) se muestran primero.
         fotos.clear();
-        juntarFotos(new File(base, "fotos"), fotos, 0);
-        if (agenda.aleatorio) Collections.shuffle(fotos);
-        else Collections.sort(fotos);
+        for (File f : todas) if (ahora - f.lastModified() < 15 * 60 * 1000L) fotos.add(f);
+        for (File f : todas) if (ahora - f.lastModified() >= 15 * 60 * 1000L) fotos.add(f);
         idxFoto = 0;
 
+        marcosArch.clear();
+        marcosArch.putAll(carpetas.marcos());
         marcos.clear();
-        String[] nombres = new File(base, "marcos").list();
-        if (nombres != null) for (String n : nombres) if (esImagen(n)) marcos.add(n);
-    }
-
-    private static void juntarFotos(File dir, List<File> salida, int nivel) {
-        File[] hijos = dir.listFiles();
-        if (hijos == null || nivel > 4) return;
-        for (File f : hijos) {
-            if (f.getName().startsWith(".")) continue;
-            if (f.isDirectory()) juntarFotos(f, salida, nivel + 1);
-            else if (esImagen(f.getName())) salida.add(f);
-        }
-    }
-
-    private static boolean esImagen(String n) {
-        String l = n.toLowerCase(Locale.ROOT);
-        return !l.startsWith(".") && (l.endsWith(".jpg") || l.endsWith(".jpeg") || l.endsWith(".png")
-                || l.endsWith(".webp") || l.endsWith(".bmp") || l.endsWith(".gif"));
+        marcos.addAll(marcosArch.keySet());
     }
 
     /** Busca la carpeta Portarretratos, primero en la tarjeta SD y luego en la memoria interna. */
@@ -393,7 +399,7 @@ public class MainActivity extends Activity {
     }
 
     /** Lee como UTF-8; si el archivo se guardó en otra codificación (Bloc de notas viejo), usa Windows-1252. */
-    private static List<String> leerLineas(File f) {
+    static List<String> leerLineas(File f) {
         try {
             InputStream in = new FileInputStream(f);
             ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -416,7 +422,7 @@ public class MainActivity extends Activity {
     }
 
     /** Decodifica reducida al tamaño de la pantalla (la tablet tiene poca memoria) y endereza según EXIF. */
-    private static Bitmap decodificar(File f, int ancho, int alto, boolean transparente) {
+    static Bitmap decodificar(File f, int ancho, int alto, boolean transparente) {
         BitmapFactory.Options o = new BitmapFactory.Options();
         o.inJustDecodeBounds = true;
         BitmapFactory.decodeFile(f.getAbsolutePath(), o);

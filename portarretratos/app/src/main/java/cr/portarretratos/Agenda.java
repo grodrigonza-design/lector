@@ -37,6 +37,7 @@ public class Agenda {
     public int nocheInicio = -1, nocheFin = -1; // minutos desde medianoche
     public String orientacion = "horizontal";
     public boolean textoArriba = false;
+    public String pin = null;               // PIN para entrar desde el teléfono
     public String ajuste = "inteligente"; // inteligente | recortar | completa
     public String textoCumple = "¡Feliz cumpleaños, {nombre}!";
     public String marcoCumple = "cumple";
@@ -122,6 +123,7 @@ public class Agenda {
         if (clave.equals("segundos")) { segundos = Math.max(3, Integer.parseInt(valor)); return true; }
         if (clave.equals("orden")) { aleatorio = !normalizar(valor).startsWith("nombre"); return true; }
         if (clave.equals("orientacion")) { orientacion = normalizar(valor); return true; }
+        if (clave.equals("pin")) { pin = valor.isEmpty() ? null : valor; return true; }
         if (clave.equals("ajuste")) { ajuste = normalizar(valor); return true; }
         if (clave.equals("posicion texto")) { textoArriba = normalizar(valor).startsWith("arriba"); return true; }
         if (clave.equals("texto cumple")) { textoCumple = der; return true; }

@@ -20,6 +20,12 @@ ajuste = inteligente
 # Pantalla apagada de noche (borre la hora para dejarla siempre encendida)
 noche = 22:30-06:00
 
+# ---------------- DESDE EL TELÉFONO ----------------
+#  Para subir fotos desde el teléfono (mismo WiFi), quite el # de la línea de abajo
+#  y escriba su PIN. Al tocar la pantalla del portarretratos aparece la dirección
+#  que hay que abrir en el navegador del teléfono.
+# pin = 0000
+
 # ---------------- CUMPLEAÑOS ----------------
 #  cumple DÍA/MES = Nombre
 #  Para un marco especial de esa persona:  cumple 03/05 = Emanuel | cumple-emanuel

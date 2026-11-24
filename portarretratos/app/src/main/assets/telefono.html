@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Portarretratos</title>
+<meta name="theme-color" content="#7a3b12">
+<style>
+:root{
+  --bg:#f6efe6; --card:#fffdf9; --ink:#2b2118; --muted:#7b6a5a; --line:#e7dacb;
+  --accent:#b4531c; --accent-ink:#fff; --danger:#b3261e; --ok:#2e7d32;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#1d1814; --card:#28211b; --ink:#f3e9de; --muted:#b9a896; --line:#3d332a;
+         --accent:#e08a4f; --accent-ink:#1d1814; --danger:#ff8a80; --ok:#81c784; }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-text-size-adjust:100%}
+header{padding:18px 16px 6px;display:flex;align-items:center;gap:10px}
+header h1{font-size:21px;margin:0;font-weight:700;letter-spacing:-.01em}
+header .marco{width:30px;height:24px;border:4px solid var(--accent);border-radius:5px}
+main{max-width:760px;margin:0 auto;padding:0 16px 40px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-top:12px}
+.oculto{display:none!important}
+button,.boton{font:inherit;font-weight:600;border:0;border-radius:12px;padding:12px 16px;
+  background:var(--accent);color:var(--accent-ink);cursor:pointer;display:inline-flex;align-items:center;
+  justify-content:center;gap:8px;min-height:48px}
+button.sec{background:transparent;color:var(--accent);border:1.5px solid var(--accent)}
+button:disabled{opacity:.5}
+.grande{width:100%;font-size:18px;min-height:56px}
+input[type=password],input[type=text],textarea{font:inherit;width:100%;padding:12px;border-radius:12px;
+  border:1.5px solid var(--line);background:var(--bg);color:var(--ink)}
+input[type=password]{font-size:26px;letter-spacing:.4em;text-align:center}
+textarea{font:13px/1.5 ui-monospace,Menlo,Consolas,monospace;min-height:60vh;white-space:pre;overflow:auto}
+nav{display:flex;gap:6px;margin-top:12px;background:var(--card);border:1px solid var(--line);
+  border-radius:14px;padding:4px;position:sticky;top:6px;z-index:2}
+nav button{flex:1;background:transparent;color:var(--muted);min-height:42px;padding:8px}
+nav button.activo{background:var(--accent);color:var(--accent-ink)}
+.nota{color:var(--muted);font-size:14px;margin:8px 0 0}
+.msg{margin-top:10px;font-size:15px}
+.msg.ok{color:var(--ok)} .msg.error{color:var(--danger)}
+.barra{height:8px;background:var(--line);border-radius:8px;overflow:hidden;margin-top:10px}
+.barra i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;margin-top:12px}
+.foto{position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;background:var(--line)}
+.foto img{width:100%;height:100%;object-fit:cover;display:block}
+.foto .x{position:absolute;top:4px;right:4px;width:34px;height:34px;min-height:0;padding:0;border-radius:50%;
+  background:rgba(0,0,0,.6);color:#fff;font-size:18px;line-height:1}
+.foto .tag{position:absolute;left:4px;bottom:4px;background:rgba(0,0,0,.6);color:#fff;font-size:11px;
+  padding:1px 6px;border-radius:6px}
+.marcos{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:12px}
+.marcos figure{margin:0}
+.marcos img{width:100%;aspect-ratio:1024/600;object-fit:cover;border-radius:8px;background:var(--line);display:block}
+.marcos figcaption{font-size:13px;color:var(--muted);margin-top:3px;word-break:break-all}
+.fila{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.fila > *{flex:1 1 160px}
+h2{font-size:17px;margin:0 0 4px}
+</style>
+</head>
+<body>
+<header><span class="marco" aria-hidden="true"></span><h1>Portarretratos</h1></header>
+<main>
+
+<!-- Entrar -->
+<section id="entrar" class="card oculto">
+  <h2>Escriba el PIN</h2>
+  <p class="nota">El mismo que está en fechas.txt.</p>
+  <form id="formPin">
+    <input id="pin" type="password" inputmode="numeric" autocomplete="current-password" maxlength="12" required>
+    <button class="grande" style="margin-top:12px">Entrar</button>
+  </form>
+  <div id="msgPin" class="msg error"></div>
+</section>
+
+<section id="sinPin" class="card oculto">
+  <h2>Acceso desde el teléfono apagado</h2>
+  <p class="nota">Para activarlo, agregue una línea como <b>pin = 1234</b> en el archivo fechas.txt de la tarjeta SD.</p>
+</section>
+
+<!-- App -->
+<div id="app" class="oculto">
+  <nav>
+    <button data-tab="fotos" class="activo">Fotos</button>
+    <button data-tab="marcos">Marcos</button>
+    <button data-tab="fechas">Fechas</button>
+  </nav>
+
+  <section id="tab-fotos">
+    <div class="card">
+      <label class="boton grande" for="archFotos">📷 Subir fotos</label>
+      <input id="archFotos" type="file" accept="image/*" multiple class="oculto">
+      <p class="nota">Puede elegir varias a la vez. Se achican antes de enviarlas y aparecen en el portarretratos en menos de un minuto.</p>
+      <div id="progFotos" class="oculto"><div class="barra"><i></i></div><div class="msg"></div></div>
+      <div id="msgFotos" class="msg"></div>
+    </div>
+    <div class="card">
+      <h2 id="cuentaFotos">Fotos</h2>
+      <p class="nota">Las más nuevas primero. Toque ✕ para quitar una foto del portarretratos.</p>
+      <div id="grid" class="grid"></div>
+      <button id="masFotos" class="sec oculto" style="width:100%;margin-top:12px">Ver más</button>
+    </div>
+  </section>
+
+  <section id="tab-marcos" class="oculto">
+    <div class="card">
+      <h2>Subir un marco</h2>
+      <p class="nota">PNG horizontal con el centro verde #00FF00. El nombre decide cuándo sale (vea la lista en fechas).
+        Si ya existe uno con ese nombre, se reemplaza.</p>
+      <div class="fila" style="margin-top:10px">
+        <input id="nombreMarco" type="text" list="nombres" placeholder="Nombre, ej. cumple-abuelos" autocapitalize="off">
+        <label class="boton" for="archMarco">🖼️ Elegir imagen</label>
+      </div>
+      <input id="archMarco" type="file" accept="image/png,image/jpeg,image/webp" class="oculto">
+      <datalist id="nombres"></datalist>
+      <div id="msgMarco" class="msg"></div>
+    </div>
+    <div class="card">
+      <h2 id="cuentaMarcos">Marcos</h2>
+      <div id="listaMarcos" class="marcos"></div>
+    </div>
+  </section>
+
+  <section id="tab-fechas" class="oculto">
+    <div class="card">
+      <h2>Cumpleaños, fechas y ajustes</h2>
+      <p class="nota">Edite y toque Guardar. Las líneas con # son comentarios.</p>
+      <textarea id="fechas" spellcheck="false" autocapitalize="off" autocorrect="off"></textarea>
+      <button id="guardar" class="grande" style="margin-top:12px">Guardar</button>
+      <div id="msgFechas" class="msg"></div>
+    </div>
+  </section>
+</div>
+</main>
+
+<script>
+var $ = function (id) { return document.getElementById(id); };
+var NOMBRES = ['cumple','cumple2','cumple-abuelos','cumple-tios','cumple-primos','cumple-nino','anio-nuevo',
+  'san-valentin','semana-santa','juan-santamaria','dia-trabajador','dia-padre','guanacaste','virgen-angeles',
+  'dia-madre','persona-negra','dia-nino','mes-patrio','independencia','halloween','abolicion-ejercito',
+  'navidad','navidad2','fin-de-anio','enero','febrero','marzo','abril','mayo','junio','julio','agosto',
+  'septiembre','octubre','noviembre','normal','normal2'];
+NOMBRES.forEach(function (n) { var o = document.createElement('option'); o.value = n; $('nombres').appendChild(o); });
+
+function mostrar(id) {
+  ['entrar', 'sinPin', 'app'].forEach(function (x) { $(x).classList.toggle('oculto', x !== id); });
+}
+function api(ruta, opciones) {
+  return fetch(ruta, Object.assign({ credentials: 'same-origin' }, opciones || {})).then(function (r) {
+    if (r.status === 401) { mostrar('entrar'); throw new Error('entrar'); }
+    if (r.status === 409) { mostrar('sinPin'); throw new Error('sin-pin'); }
+    return r;
+  });
+}
+function aviso(el, texto, tipo) { el.textContent = texto; el.className = 'msg ' + (tipo || ''); }
+
+/* ---------- entrar ---------- */
+$('formPin').addEventListener('submit', function (e) {
+  e.preventDefault();
+  aviso($('msgPin'), 'Revisando…');
+  fetch('/api/entrar', { method: 'POST', body: $('pin').value, credentials: 'same-origin' }).then(function (r) {
+    if (r.ok) { $('pin').value = ''; aviso($('msgPin'), ''); iniciar(); }
+    else if (r.status === 409) mostrar('sinPin');
+    else if (r.status === 429) aviso($('msgPin'), 'Demasiados intentos. Espere 5 minutos.', 'error');
+    else aviso($('msgPin'), 'PIN incorrecto.', 'error');
+  }).catch(function () { aviso($('msgPin'), 'No hay conexión con la tablet.', 'error'); });
+});
+
+/* ---------- pestañas ---------- */
+document.querySelectorAll('nav button').forEach(function (b) {
+  b.addEventListener('click', function () {
+    document.querySelectorAll('nav button').forEach(function (x) { x.classList.toggle('activo', x === b); });
+    ['fotos', 'marcos', 'fechas'].forEach(function (t) { $('tab-' + t).classList.toggle('oculto', t !== b.dataset.tab); });
+    if (b.dataset.tab === 'marcos') cargarMarcos();
+    if (b.dataset.tab === 'fechas') cargarFechas();
+  });
+});
+
+/* ---------- fotos ---------- */
+var todas = [], mostradas = 0;
+function mini(id) { return '/api/mini?id=' + encodeURIComponent(id); }
+function cargarFotos() {
+  return api('/api/fotos').then(function (r) { return r.json(); }).then(function (lista) {
+    todas = lista; mostradas = 0; $('grid').innerHTML = '';
+    $('cuentaFotos').textContent = lista.length + (lista.length === 1 ? ' foto' : ' fotos');
+    masFotos();
+  });
+}
+function masFotos() {
+  var hasta = Math.min(todas.length, mostradas + 60);
+  for (; mostradas < hasta; mostradas++) $('grid').appendChild(tarjeta(todas[mostradas]));
+  $('masFotos').classList.toggle('oculto', mostradas >= todas.length);
+}
+$('masFotos').addEventListener('click', masFotos);
+function tarjeta(f) {
+  var d = document.createElement('div'); d.className = 'foto';
+  var img = document.createElement('img'); img.loading = 'lazy'; img.alt = f.nombre; img.src = mini(f.id);
+  var x = document.createElement('button'); x.className = 'x'; x.textContent = '✕'; x.title = 'Quitar';
+  x.addEventListener('click', function () {
+    if (!confirm('¿Quitar esta foto del portarretratos?')) return;
+    api('/api/borrar?id=' + encodeURIComponent(f.id), { method: 'POST' }).then(function (r) {
+      if (r.ok) { d.remove(); todas = todas.filter(function (t) { return t.id !== f.id; });
+        $('cuentaFotos').textContent = todas.length + ' fotos'; }
+    });
+  });
+  d.appendChild(img); d.appendChild(x);
+  if (f.telefono) { var t = document.createElement('span'); t.className = 'tag'; t.textContent = 'teléfono'; d.appendChild(t); }
+  return d;
+}
+
+/* Achicar en el teléfono antes de enviar (más rápido y la tablet no sufre). */
+function achicar(file, lado) {
+  return new Promise(function (ok) {
+    var url = URL.createObjectURL(file), img = new Image();
+    img.onload = function () {
+      var esc = Math.min(1, lado / Math.max(img.naturalWidth, img.naturalHeight));
+      if (esc === 1 && file.size < 1.5e6 && /jpe?g/i.test(file.type)) { URL.revokeObjectURL(url); ok(file); return; }
+      var c = document.createElement('canvas');
+      c.width = Math.round(img.naturalWidth * esc); c.height = Math.round(img.naturalHeight * esc);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      c.toBlob(function (b) { ok(b || file); }, 'image/jpeg', 0.86);
+    };
+    img.onerror = function () { URL.revokeObjectURL(url); ok(file); };
+    img.src = url;
+  });
+}
+
+$('archFotos').addEventListener('change', function () {
+  var files = Array.prototype.slice.call(this.files); this.value = '';
+  if (!files.length) return;
+  var prog = $('progFotos'), barra = prog.querySelector('i'), txt = prog.querySelector('.msg');
+  prog.classList.remove('oculto'); aviso($('msgFotos'), '');
+  var bien = 0, mal = 0, i = 0;
+  (function siguiente() {
+    if (i >= files.length) {
+      prog.classList.add('oculto');
+      aviso($('msgFotos'), bien + (bien === 1 ? ' foto subida' : ' fotos subidas') + (mal ? ', ' + mal + ' con error' : '') + '. 🎉',
+        mal ? 'error' : 'ok');
+      cargarFotos();
+      return;
+    }
+    var f = files[i];
+    txt.textContent = 'Subiendo ' + (i + 1) + ' de ' + files.length + '…';
+    barra.style.width = (100 * i / files.length) + '%';
+    achicar(f, 1920).then(function (blob) {
+      return api('/api/foto?nombre=' + encodeURIComponent(f.name), { method: 'POST', body: blob });
+    }).then(function (r) { if (r.ok) bien++; else mal++; }, function () { mal++; })
+      .then(function () { i++; siguiente(); });
+  })();
+});
+
+/* ---------- marcos ---------- */
+function cargarMarcos() {
+  api('/api/marcos').then(function (r) { return r.json(); }).then(function (lista) {
+    $('cuentaMarcos').textContent = lista.length + ' marcos';
+    var cont = $('listaMarcos'); cont.innerHTML = '';
+    lista.forEach(function (m) {
+      var fig = document.createElement('figure');
+      fig.innerHTML = '<img loading="lazy" alt=""><figcaption></figcaption>';
+      fig.querySelector('img').src = mini(m.id);
+      fig.querySelector('figcaption').textContent = m.nombre + (m.telefono ? ' · del teléfono' : '');
+      cont.appendChild(fig);
+    });
+  }).catch(function () {});
+}
+$('archMarco').addEventListener('change', function () {
+  var f = this.files[0]; this.value = '';
+  var nombre = $('nombreMarco').value.trim();
+  if (!f) return;
+  if (!nombre) { aviso($('msgMarco'), 'Primero escriba el nombre del marco.', 'error'); return; }
+  aviso($('msgMarco'), 'Subiendo…');
+  api('/api/marco?nombre=' + encodeURIComponent(nombre), { method: 'POST', body: f })
+    .then(function (r) { return r.json().then(function (j) { return [r.ok, j]; }); })
+    .then(function (res) {
+      if (res[0]) { aviso($('msgMarco'), 'Marco “' + res[1].nombre + '” guardado. ✔', 'ok'); $('nombreMarco').value = ''; cargarMarcos(); }
+      else aviso($('msgMarco'), res[1].error || 'No se pudo subir.', 'error');
+    }).catch(function () { aviso($('msgMarco'), 'No se pudo subir.', 'error'); });
+});
+
+/* ---------- fechas ---------- */
+function cargarFechas() {
+  api('/api/fechas').then(function (r) { return r.text(); }).then(function (t) { $('fechas').value = t; }).catch(function () {});
+}
+$('guardar').addEventListener('click', function () {
+  aviso($('msgFechas'), 'Guardando…');
+  api('/api/fechas', { method: 'POST', body: $('fechas').value, headers: { 'Content-Type': 'text/plain; charset=utf-8' } })
+    .then(function (r) { return r.json().then(function (j) { return [r.ok, j]; }); })
+    .then(function (res) {
+      if (!res[0]) { aviso($('msgFechas'), res[1].error || 'No se pudo guardar.', 'error'); return; }
+      var av = res[1].avisos || [];
+      aviso($('msgFechas'), av.length ? 'Guardado, pero revise: ' + av.join(' · ') : 'Guardado. ✔', av.length ? 'error' : 'ok');
+    }).catch(function () { aviso($('msgFechas'), 'No se pudo guardar.', 'error'); });
+});
+
+/* ---------- inicio ---------- */
+function iniciar() { cargarFotos().then(function () { mostrar('app'); }).catch(function () {}); }
+iniciar();
+</script>
+</body>
+</html>
