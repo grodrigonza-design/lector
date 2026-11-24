@@ -15,6 +15,20 @@ android {
         versionName '1.0'
     }
 
+    // Firma fija: así cada versión nueva se puede instalar encima de la anterior
+    // sin desinstalar (desinstalar borraría las fotos subidas desde el teléfono).
+    signingConfigs {
+        fija {
+            storeFile file('portarretratos.keystore')
+            storePassword 'portarretratos'
+            keyAlias 'portarretratos'
+            keyPassword 'portarretratos'
+        }
+    }
+    buildTypes {
+        debug { signingConfig signingConfigs.fija }
+    }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
