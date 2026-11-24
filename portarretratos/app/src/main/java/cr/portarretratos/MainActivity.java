@@ -68,7 +68,7 @@ public class MainActivity extends Activity {
     private String marcoCargado;
     private Bitmap marcoBmp;
     private Rect marcoVentana;
-    private final int[] marcoTexto = new int[2];
+    private final int[] marcoTexto = new int[4];
     private boolean activa;
 
     private final Runnable tick = new Runnable() { public void run() { siguiente(); } };
@@ -76,7 +76,7 @@ public class MainActivity extends Activity {
 
     private static class Paso {
         Bitmap foto, marco; String texto, info, error; boolean noche, textoArriba; int segundos = 20;
-        Rect ventana; int ancho, alto, textoDesde, textoHasta;
+        Rect ventana; int ancho, alto, textoDesde, textoHasta, textoAncho;
         String orientacion;
     }
 
@@ -190,7 +190,7 @@ public class MainActivity extends Activity {
     /** Hilo de fondo: busca la carpeta, lee configuración, elige y decodifica. */
     private Paso preparar(int ancho, int alto, boolean info) {
         Paso p = new Paso();
-        p.ancho = ancho; p.alto = alto; p.ventana = new Rect(0, 0, ancho, alto); p.textoHasta = alto;
+        p.ancho = ancho; p.alto = alto; p.ventana = new Rect(0, 0, ancho, alto); p.textoHasta = alto; p.textoAncho = ancho;
         try {
             if (base == null || !base.isDirectory()) { base = buscarCarpeta(); configMod = -2; }
             if (base == null) {
@@ -238,6 +238,7 @@ public class MainActivity extends Activity {
             p.ventana = marcoBmp != null ? marcoVentana : new Rect(0, 0, ancho, alto);
             p.textoDesde = marcoBmp != null ? marcoTexto[0] : 0;
             p.textoHasta = marcoBmp != null ? marcoTexto[1] : alto;
+            p.textoAncho = marcoBmp != null ? marcoTexto[agenda.textoArriba ? 3 : 2] : ancho;
 
             if (idxFoto >= fotos.size()) { idxFoto = 0; ultimoEscaneo = 0; recargarSiHaceFalta(); }
             File foto = fotos.get(idxFoto++ % fotos.size());
@@ -296,7 +297,8 @@ public class MainActivity extends Activity {
                 textoV.setText(p.texto);
                 int altoPantalla = Math.min(p.alto, p.ancho);
                 textoV.setTextSize(TypedValue.COMPLEX_UNIT_PX, altoPantalla * 0.075f);
-                textoV.setMaxWidth((int) (p.ventana.width() * 0.92f));
+                // si hay adornos a los lados, el mensaje se angosta y pasa a dos líneas
+                textoV.setMaxWidth((int) Math.min(p.ventana.width() * 0.92f, p.textoAncho * 0.97f));
                 FrameLayout.LayoutParams lt = (FrameLayout.LayoutParams) textoV.getLayoutParams();
                 lt.gravity = (p.textoArriba ? Gravity.TOP : Gravity.BOTTOM) | Gravity.CENTER_HORIZONTAL;
                 // dentro del hueco, sin tapar adornos del marco que entren en él (pastel, moño…)

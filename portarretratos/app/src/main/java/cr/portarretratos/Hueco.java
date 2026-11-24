@@ -16,7 +16,7 @@ public final class Hueco {
      * Rellena desde el centro de la imagen. Si el centro es transparente, mide el área transparente.
      * Si el centro es de un color sólido (verde, blanco…), lo vuelve transparente (modifica px).
      *
-     * @return {izq, arriba, der, abajo, textoArriba, textoAbajo} del hueco (der/abajo exclusivos), o null si no hay hueco útil.
+     * @return {izq, arriba, der, abajo, textoArriba, textoAbajo, anchoTextoAbajo, anchoTextoArriba} del hueco (der/abajo exclusivos), o null si no hay hueco útil.
      */
     public static int[] abrir(int[] px, int w, int h) {
         int centro = px[(h / 2) * w + w / 2];
@@ -65,7 +65,10 @@ public final class Hueco {
         while (x0 < x1 && porCol[x0] < maxCol * 0.5) x0++;
         while (x1 > x0 && porCol[x1] < maxCol * 0.5) x1--;
         int[] seguro = zonaLibre(px, w, x0, y0, x1 + 1, y1 + 1);
-        return new int[]{x0, y0, x1 + 1, y1 + 1, seguro[0], seguro[1]};
+        int banda = (int) (h * 0.13f); // alto aproximado de una línea de mensaje
+        int anchoAbajo = anchoLibre(px, w, Math.max(y0, seguro[1] - banda), seguro[1], x0, x1 + 1);
+        int anchoArriba = anchoLibre(px, w, seguro[0], Math.min(y1 + 1, seguro[0] + banda), x0, x1 + 1);
+        return new int[]{x0, y0, x1 + 1, y1 + 1, seguro[0], seguro[1], anchoAbajo, anchoArriba};
     }
 
     /**
@@ -80,6 +83,17 @@ public final class Hueco {
         for (int y = y0; y < y0 + alto / 2; y++) { if (libre(px, w, y, a, b)) { arriba = y; break; } }
         for (int y = y1 - 1; y > y0 + alto / 2; y--) { if (libre(px, w, y, a, b)) { abajo = y + 1; break; } }
         return new int[]{arriba, abajo};
+    }
+
+    /** Ancho libre centrado entre las filas ya..yb (sin chocar con calabazas, regalos… de las esquinas). */
+    static int anchoLibre(int[] px, int w, int ya, int yb, int x0, int x1) {
+        int cx = (x0 + x1) / 2, medio = (x1 - x0) / 2;
+        for (int y = ya; y < yb; y++) {
+            int i = 0;
+            while (i < medio && (px[y * w + cx - i] >>> 24) < 128 && (px[y * w + cx + i] >>> 24) < 128) i++;
+            medio = Math.min(medio, i);
+        }
+        return medio * 2;
     }
 
     private static boolean libre(int[] px, int w, int y, int a, int b) {

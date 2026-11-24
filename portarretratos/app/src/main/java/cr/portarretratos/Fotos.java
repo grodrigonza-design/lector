@@ -12,7 +12,7 @@ final class Fotos {
 
     /**
      * Abre el hueco del marco (si viene con centro de color).
-     * @param texto recibe {arriba, abajo}: la franja libre de adornos donde puede ir el mensaje
+     * @param texto recibe {arriba, abajo, anchoAbajo, anchoArriba}: dónde cabe el mensaje sin tapar adornos
      * @return dónde va la foto
      */
     static Rect prepararMarco(Bitmap marco, int[] texto) {
@@ -20,9 +20,9 @@ final class Fotos {
         int[] px = new int[w * h];
         marco.getPixels(px, 0, w, 0, 0, w, h);
         int[] r = Hueco.abrir(px, w, h);
-        if (r == null) { texto[0] = 0; texto[1] = h; return new Rect(0, 0, w, h); }
+        if (r == null) { texto[0] = 0; texto[1] = h; texto[2] = texto[3] = w; return new Rect(0, 0, w, h); }
         marco.setPixels(px, 0, w, 0, 0, w, h);
-        texto[0] = r[4]; texto[1] = r[5];
+        texto[0] = r[4]; texto[1] = r[5]; texto[2] = r[6]; texto[3] = r[7];
         return new Rect(r[0], r[1], r[2], r[3]);
     }
 
