@@ -7,6 +7,9 @@ on:
       - '.github/workflows/portarretratos.yml'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   apk:
     runs-on: ubuntu-latest
@@ -35,3 +38,14 @@ jobs:
         with:
           name: Portarretratos
           path: portarretratos/salida/
+      - name: Publicar descarga directa (Releases)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          (cd salida && zip -qr ../Portarretratos.zip .)
+          cp salida/Portarretratos.apk Portarretratos.apk
+          gh release delete portarretratos --yes --cleanup-tag || true
+          gh release create portarretratos Portarretratos.zip Portarretratos.apk \
+            --target "$GITHUB_SHA" --latest=false \
+            --title "Portarretratos (última versión)" \
+            --notes "Descargue Portarretratos.zip, descomprímalo y copie su contenido a la raíz de la tarjeta SD. Instrucciones en LEEME.md."
