@@ -10,14 +10,19 @@ import android.graphics.RectF;
 final class Fotos {
     private Fotos() { }
 
-    /** Abre el hueco del marco (si viene con centro de color) y devuelve dónde va la foto. */
-    static Rect prepararMarco(Bitmap marco) {
+    /**
+     * Abre el hueco del marco (si viene con centro de color).
+     * @param texto recibe {arriba, abajo}: la franja libre de adornos donde puede ir el mensaje
+     * @return dónde va la foto
+     */
+    static Rect prepararMarco(Bitmap marco, int[] texto) {
         int w = marco.getWidth(), h = marco.getHeight();
         int[] px = new int[w * h];
         marco.getPixels(px, 0, w, 0, 0, w, h);
         int[] r = Hueco.abrir(px, w, h);
-        if (r == null) return new Rect(0, 0, w, h);
+        if (r == null) { texto[0] = 0; texto[1] = h; return new Rect(0, 0, w, h); }
         marco.setPixels(px, 0, w, 0, 0, w, h);
+        texto[0] = r[4]; texto[1] = r[5];
         return new Rect(r[0], r[1], r[2], r[3]);
     }
 

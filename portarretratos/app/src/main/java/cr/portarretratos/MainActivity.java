@@ -68,6 +68,7 @@ public class MainActivity extends Activity {
     private String marcoCargado;
     private Bitmap marcoBmp;
     private Rect marcoVentana;
+    private final int[] marcoTexto = new int[2];
     private boolean activa;
 
     private final Runnable tick = new Runnable() { public void run() { siguiente(); } };
@@ -75,7 +76,7 @@ public class MainActivity extends Activity {
 
     private static class Paso {
         Bitmap foto, marco; String texto, info, error; boolean noche, textoArriba; int segundos = 20;
-        Rect ventana; int ancho, alto;
+        Rect ventana; int ancho, alto, textoDesde, textoHasta;
         String orientacion;
     }
 
@@ -189,7 +190,7 @@ public class MainActivity extends Activity {
     /** Hilo de fondo: busca la carpeta, lee configuración, elige y decodifica. */
     private Paso preparar(int ancho, int alto, boolean info) {
         Paso p = new Paso();
-        p.ancho = ancho; p.alto = alto; p.ventana = new Rect(0, 0, ancho, alto);
+        p.ancho = ancho; p.alto = alto; p.ventana = new Rect(0, 0, ancho, alto); p.textoHasta = alto;
         try {
             if (base == null || !base.isDirectory()) { base = buscarCarpeta(); configMod = -2; }
             if (base == null) {
@@ -228,13 +229,15 @@ public class MainActivity extends Activity {
                     if (crudo != null) {
                         marcoBmp = Bitmap.createScaledBitmap(crudo, ancho, alto, true).copy(Bitmap.Config.ARGB_8888, true);
                         if (crudo != marcoBmp) crudo.recycle();
-                        marcoVentana = Fotos.prepararMarco(marcoBmp);
+                        marcoVentana = Fotos.prepararMarco(marcoBmp, marcoTexto);
                     }
                     marcoCargado = clave;
                 }
                 p.marco = marcoBmp;
             } else { marcoCargado = null; marcoBmp = null; }
             p.ventana = marcoBmp != null ? marcoVentana : new Rect(0, 0, ancho, alto);
+            p.textoDesde = marcoBmp != null ? marcoTexto[0] : 0;
+            p.textoHasta = marcoBmp != null ? marcoTexto[1] : alto;
 
             if (idxFoto >= fotos.size()) { idxFoto = 0; ultimoEscaneo = 0; recargarSiHaceFalta(); }
             File foto = fotos.get(idxFoto++ % fotos.size());
@@ -296,10 +299,10 @@ public class MainActivity extends Activity {
                 textoV.setMaxWidth((int) (p.ventana.width() * 0.92f));
                 FrameLayout.LayoutParams lt = (FrameLayout.LayoutParams) textoV.getLayoutParams();
                 lt.gravity = (p.textoArriba ? Gravity.TOP : Gravity.BOTTOM) | Gravity.CENTER_HORIZONTAL;
-                // dentro del hueco del marco, un poco separado del borde
-                int sep = (int) (altoPantalla * 0.035f);
-                lt.topMargin = p.ventana.top + sep;
-                lt.bottomMargin = p.alto - p.ventana.bottom + sep;
+                // dentro del hueco, sin tapar adornos del marco que entren en él (pastel, moño…)
+                int sep = (int) (altoPantalla * 0.03f);
+                lt.topMargin = p.textoDesde + sep;
+                lt.bottomMargin = p.alto - p.textoHasta + sep;
                 textoV.setLayoutParams(lt);
                 textoV.setVisibility(View.VISIBLE);
             } else {

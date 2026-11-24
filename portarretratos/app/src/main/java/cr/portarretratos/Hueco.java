@@ -16,7 +16,7 @@ public final class Hueco {
      * Rellena desde el centro de la imagen. Si el centro es transparente, mide el área transparente.
      * Si el centro es de un color sólido (verde, blanco…), lo vuelve transparente (modifica px).
      *
-     * @return {izq, arriba, der, abajo} del hueco (der/abajo exclusivos), o null si no hay hueco útil.
+     * @return {izq, arriba, der, abajo, textoArriba, textoAbajo} del hueco (der/abajo exclusivos), o null si no hay hueco útil.
      */
     public static int[] abrir(int[] px, int w, int h) {
         int centro = px[(h / 2) * w + w / 2];
@@ -51,7 +51,28 @@ public final class Hueco {
         }
         // Un "hueco" de menos del 15 % de la imagen no es un hueco: probablemente el centro es parte del dibujo.
         if (total < w * h * 0.15) return null;
-        return new int[]{x0, y0, x1 + 1, y1 + 1};
+        int[] seguro = zonaLibre(px, w, x0, y0, x1 + 1, y1 + 1);
+        return new int[]{x0, y0, x1 + 1, y1 + 1, seguro[0], seguro[1]};
+    }
+
+    /**
+     * Filas donde la franja central del hueco está libre de adornos (pasteles, moños…),
+     * para poner ahí el mensaje sin taparlos. Devuelve {primera fila libre arriba, última fila libre abajo + 1}.
+     */
+    static int[] zonaLibre(int[] px, int w, int x0, int y0, int x1, int y1) {
+        int margen = (x1 - x0) / 5, a = x0 + margen, b = x1 - margen;
+        int arriba = y0, abajo = y1;
+        int alto = y1 - y0;
+        // ignorar las esquinas redondeadas: buscar desde un 4 % hacia dentro como máximo hasta la mitad
+        for (int y = y0; y < y0 + alto / 2; y++) { if (libre(px, w, y, a, b)) { arriba = y; break; } }
+        for (int y = y1 - 1; y > y0 + alto / 2; y--) { if (libre(px, w, y, a, b)) { abajo = y + 1; break; } }
+        return new int[]{arriba, abajo};
+    }
+
+    private static boolean libre(int[] px, int w, int y, int a, int b) {
+        int abiertos = 0;
+        for (int x = a; x < b; x++) if ((px[y * w + x] >>> 24) < 128) abiertos++;
+        return abiertos >= (b - a) * 0.98;
     }
 
     static int distancia(int a, int b) {
