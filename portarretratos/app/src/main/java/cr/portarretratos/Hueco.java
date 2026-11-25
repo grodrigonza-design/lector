@@ -85,21 +85,28 @@ public final class Hueco {
         return new int[]{arriba, abajo};
     }
 
-    /** Ancho libre centrado entre las filas ya..yb (sin chocar con calabazas, regalos… de las esquinas). */
+    /**
+     * Ancho libre centrado entre las filas ya..yb (sin chocar con calabazas, regalos… de las esquinas).
+     * Una columna cuenta como ocupada si tiene más de 2 píxeles del marco en esa franja
+     * (así unos puntitos sueltos no lo arruinan).
+     */
     static int anchoLibre(int[] px, int w, int ya, int yb, int x0, int x1) {
-        int cx = (x0 + x1) / 2, medio = (x1 - x0) / 2;
-        for (int y = ya; y < yb; y++) {
-            int i = 0;
-            while (i < medio && (px[y * w + cx - i] >>> 24) < 128 && (px[y * w + cx + i] >>> 24) < 128) i++;
-            medio = Math.min(medio, i);
-        }
-        return medio * 2;
+        int cx = (x0 + x1) / 2, medio = (x1 - x0) / 2, i = 0;
+        while (i < medio && !columnaOcupada(px, w, cx - i, ya, yb) && !columnaOcupada(px, w, cx + i, ya, yb)) i++;
+        return i * 2;
+    }
+
+    private static boolean columnaOcupada(int[] px, int w, int x, int ya, int yb) {
+        int ocupados = 0;
+        for (int y = ya; y < yb; y++) if ((px[y * w + x] >>> 24) >= 128 && ++ocupados > 2) return true;
+        return false;
     }
 
     private static boolean libre(int[] px, int w, int y, int a, int b) {
-        int abiertos = 0;
-        for (int x = a; x < b; x++) if ((px[y * w + x] >>> 24) < 128) abiertos++;
-        return abiertos >= (b - a) * 0.98;
+        // Libre = casi sin píxeles del marco (tolera 3 puntitos sueltos, no la punta de una vela).
+        int ocupados = 0, tolera = Math.max(3, (b - a) / 200);
+        for (int x = a; x < b; x++) if ((px[y * w + x] >>> 24) >= 128 && ++ocupados > tolera) return false;
+        return true;
     }
 
     static int distancia(int a, int b) {

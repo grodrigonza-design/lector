@@ -21,6 +21,9 @@ final class Fotos {
         marco.getPixels(px, 0, w, 0, 0, w, h);
         int[] r = Hueco.abrir(px, w, h);
         if (r == null) { texto[0] = 0; texto[1] = h; texto[2] = texto[3] = w; return new Rect(0, 0, w, h); }
+        // Importante: un PNG sin transparencia queda marcado como "opaco" y Android
+        // pintaría el hueco de NEGRO tapando la foto. Hay que avisarle que ahora tiene transparencia.
+        marco.setHasAlpha(true);
         marco.setPixels(px, 0, w, 0, 0, w, h);
         texto[0] = r[4]; texto[1] = r[5]; texto[2] = r[6]; texto[3] = r[7];
         return new Rect(r[0], r[1], r[2], r[3]);
