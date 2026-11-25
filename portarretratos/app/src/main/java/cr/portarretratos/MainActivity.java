@@ -55,7 +55,8 @@ public class MainActivity extends Activity {
     private final ImageView[] fotoV = new ImageView[2];
     private int frente = 0;
     private ImageView marcoV;
-    private TextView textoV, infoV, avisoV, fbV;
+    private TextView textoV, infoV, avisoV, fbV, fechaV, horaV;
+    private Typeface letraFecha, letraHora;
     private View nocheV;
 
     // Estado (solo se toca desde el hilo de fondo)
@@ -80,7 +81,8 @@ public class MainActivity extends Activity {
 
     private static class Paso {
         Bitmap foto, marco; String texto, info, error; boolean noche, textoArriba; int segundos = 20;
-        Rect ventana; int ancho, alto, textoDesde, textoHasta, textoAncho;
+        Rect ventana; int ancho, alto, textoDesde, textoHasta, textoAncho, textoAnchoArriba;
+        boolean verFecha = true, verHora = true, hora24;
         String orientacion;
     }
 
@@ -119,6 +121,16 @@ public class MainActivity extends Activity {
         FrameLayout.LayoutParams lt = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT,
                 FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
         raiz.addView(textoV, lt);
+
+        // Fecha (arriba, letra manuscrita) y hora (abajo), dentro del hueco del marco
+        letraFecha = fuente("fonts/DancingScript-Bold.ttf", Typeface.create(Typeface.SERIF, Typeface.BOLD_ITALIC));
+        letraHora = fuente("fonts/PlayfairDisplay-Bold.ttf", Typeface.create(Typeface.SERIF, Typeface.BOLD));
+        fechaV = etiqueta(letraFecha);
+        raiz.addView(fechaV, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.CENTER_HORIZONTAL));
+        horaV = etiqueta(letraHora);
+        raiz.addView(horaV, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL));
 
         avisoV = mensaje(16);
         avisoV.setGravity(Gravity.CENTER);
@@ -175,8 +187,8 @@ public class MainActivity extends Activity {
 
     private volatile boolean mostrarInfo = true; // al abrir, mostrar la dirección para el teléfono
 
-    @Override protected void onResume() { super.onResume(); activa = true; siguiente(); }
-    @Override protected void onPause() { super.onPause(); activa = false; ui.removeCallbacks(tick); }
+    @Override protected void onResume() { super.onResume(); activa = true; siguiente(); ui.postDelayed(reloj, 15000); }
+    @Override protected void onPause() { super.onPause(); activa = false; ui.removeCallbacks(tick); ui.removeCallbacks(reloj); }
     @Override protected void onDestroy() { super.onDestroy(); fondo.shutdownNow(); if (servidor != null) servidor.detener(); if (facebook != null) facebook.detener(); }
 
     @Override
@@ -226,7 +238,7 @@ public class MainActivity extends Activity {
     /** Hilo de fondo: busca la carpeta, lee configuración, elige y decodifica. */
     private Paso preparar(int ancho, int alto, boolean info) {
         Paso p = new Paso();
-        p.ancho = ancho; p.alto = alto; p.ventana = new Rect(0, 0, ancho, alto); p.textoHasta = alto; p.textoAncho = ancho;
+        p.ancho = ancho; p.alto = alto; p.ventana = new Rect(0, 0, ancho, alto); p.textoHasta = alto; p.textoAncho = ancho; p.textoAnchoArriba = ancho;
         try {
             if (base == null || !base.isDirectory()) { base = buscarCarpeta(); carpetas.base = base; configMod = -2; }
             if (!incluidosListos) { carpetas.copiarIncluidos(); incluidosListos = true; }
@@ -245,6 +257,9 @@ public class MainActivity extends Activity {
             p.segundos = agenda.segundos;
             p.orientacion = agenda.orientacion;
             p.textoArriba = agenda.textoArriba;
+            p.verFecha = agenda.mostrarFecha;
+            p.verHora = agenda.mostrarHora;
+            p.hora24 = agenda.hora24;
 
             Calendar ahora = Calendar.getInstance();
             if (agenda.esNoche(ahora) && System.currentTimeMillis() > despiertoHasta) {
@@ -253,15 +268,24 @@ public class MainActivity extends Activity {
                 return p;
             }
 
-            Agenda.Resultado r = agenda.decidir(ahora, marcos);
+            boolean vertical = alto > ancho;
+            Agenda.Resultado r = agenda.decidir(ahora, marcos, vertical);
             p.texto = r.texto;
             if (!r.archivos.isEmpty()) {
                 String nombre = r.archivos.get(idxMarco++ % r.archivos.size());
-                String clave = nombre + "@" + ancho + "x" + alto;
+                String clave = nombre + "@" + ancho + "x" + alto + (r.girar ? "@girado" : "");
                 if (!clave.equals(marcoCargado)) {
                     marcoBmp = null;
                     File archMarco = marcosArch.get(nombre);
                     Bitmap crudo = archMarco == null ? null : decodificar(archMarco, ancho, alto, true);
+                    if (crudo != null && r.girar) {
+                        // Tablet parada y no hay versión vertical del marco: girar el horizontal 90°.
+                        Matrix giro = new Matrix();
+                        giro.postRotate(90);
+                        Bitmap girado = Bitmap.createBitmap(crudo, 0, 0, crudo.getWidth(), crudo.getHeight(), giro, true);
+                        if (girado != crudo) crudo.recycle();
+                        crudo = girado;
+                    }
                     if (crudo != null) {
                         marcoBmp = Bitmap.createScaledBitmap(crudo, ancho, alto, true).copy(Bitmap.Config.ARGB_8888, true);
                         if (crudo != marcoBmp) crudo.recycle();
@@ -274,7 +298,8 @@ public class MainActivity extends Activity {
             p.ventana = marcoBmp != null ? marcoVentana : new Rect(0, 0, ancho, alto);
             p.textoDesde = marcoBmp != null ? marcoTexto[0] : 0;
             p.textoHasta = marcoBmp != null ? marcoTexto[1] : alto;
-            p.textoAncho = marcoBmp != null ? marcoTexto[agenda.textoArriba ? 3 : 2] : ancho;
+            p.textoAncho = marcoBmp != null ? marcoTexto[2] : ancho;
+            p.textoAnchoArriba = marcoBmp != null ? marcoTexto[3] : ancho;
 
             // Si una foto no se puede abrir, probar con las siguientes (hasta 8) en vez de dejar el marco vacío.
             File foto = null;
@@ -322,7 +347,7 @@ public class MainActivity extends Activity {
     private void aplicar(Paso p) {
         if (isFinishing()) return;
         if ("vertical".equals(p.orientacion)) setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
-        else if ("auto".equals(p.orientacion)) setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
+        else if ("auto".equals(p.orientacion)) setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR);
         else if (p.orientacion != null) setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
 
         WindowManager.LayoutParams lp = getWindow().getAttributes();
@@ -345,23 +370,8 @@ public class MainActivity extends Activity {
             frente = 1 - frente;
             marcoV.setImageBitmap(p.marco);
 
-            if (p.texto != null && !p.texto.isEmpty()) {
-                textoV.setText(p.texto);
-                int altoPantalla = Math.min(p.alto, p.ancho);
-                textoV.setTextSize(TypedValue.COMPLEX_UNIT_PX, altoPantalla * 0.075f);
-                // si hay adornos a los lados, el mensaje se angosta y pasa a dos líneas
-                textoV.setMaxWidth((int) Math.min(p.ventana.width() * 0.92f, p.textoAncho * 0.97f));
-                FrameLayout.LayoutParams lt = (FrameLayout.LayoutParams) textoV.getLayoutParams();
-                lt.gravity = (p.textoArriba ? Gravity.TOP : Gravity.BOTTOM) | Gravity.CENTER_HORIZONTAL;
-                // dentro del hueco, sin tapar adornos del marco que entren en él (pastel, moño…)
-                int sep = (int) (altoPantalla * 0.03f);
-                lt.topMargin = p.textoDesde + sep;
-                lt.bottomMargin = p.alto - p.textoHasta + sep;
-                textoV.setLayoutParams(lt);
-                textoV.setVisibility(View.VISIBLE);
-            } else {
-                textoV.setVisibility(View.GONE);
-            }
+            ultimoPaso = p;
+            acomodarTextos(p);
         }
 
         String avisoFb = facebook.avisoPantalla();
@@ -375,6 +385,118 @@ public class MainActivity extends Activity {
             ui.postDelayed(ocultarInfo, 8000);
         }
         if (activa) ui.postDelayed(tick, p.segundos * 1000L);
+    }
+
+    // ------------------------------------------------------------------ fecha, hora y mensaje
+
+    private Paso ultimoPaso;
+    private final Runnable reloj = new Runnable() {
+        public void run() {
+            if (ultimoPaso != null) acomodarTextos(ultimoPaso); // hora nueva (y fecha a medianoche)
+            ui.postDelayed(this, 15000);
+        }
+    };
+
+    /** Fecha arriba, hora abajo y el mensaje (cumpleaños, feriado) encima de la hora, todo dentro del hueco. */
+    private void acomodarTextos(Paso p) {
+        int corto = Math.min(p.alto, p.ancho);
+        int sep = (int) (corto * 0.025f);
+        int anchoHueco = p.ventana.width();
+        ponerFechaHora(p);
+
+        float tamFecha = corto * 0.085f, tamHora = corto * 0.062f, tamTexto = corto * 0.07f;
+        // Fecha y hora siempre en una línea: si no caben (p. ej. tablet vertical), la letra se achica.
+        tamFecha = caber(fechaV, tamFecha, (int) Math.min(anchoHueco * 0.92f, p.textoAnchoArriba * 0.97f));
+        tamHora = caber(horaV, tamHora, (int) Math.min(anchoHueco * 0.92f, p.textoAncho * 0.97f));
+
+        int arriba = p.textoDesde + sep, abajo = p.alto - p.textoHasta + sep;
+        margenes(fechaV, arriba, 0);
+        margenes(horaV, 0, abajo);
+        int altoFecha = p.verFecha ? (int) (tamFecha * 1.45f) + dp(12) + sep / 2 : 0;
+        int altoHora = p.verHora ? (int) (tamHora * 1.45f) + dp(12) + sep / 2 : 0;
+
+        if (p.texto != null && !p.texto.isEmpty()) {
+            textoV.setText(p.texto);
+            textoV.setTextSize(TypedValue.COMPLEX_UNIT_PX, tamTexto);
+            // si hay adornos a los lados, el mensaje se angosta y pasa a dos líneas
+            textoV.setMaxWidth((int) Math.min(anchoHueco * 0.92f, (p.textoArriba ? p.textoAnchoArriba : p.textoAncho) * 0.97f));
+            FrameLayout.LayoutParams lt = (FrameLayout.LayoutParams) textoV.getLayoutParams();
+            lt.gravity = (p.textoArriba ? Gravity.TOP : Gravity.BOTTOM) | Gravity.CENTER_HORIZONTAL;
+            lt.topMargin = arriba + altoFecha;
+            lt.bottomMargin = abajo + altoHora;
+            textoV.setLayoutParams(lt);
+            textoV.setVisibility(View.VISIBLE);
+        } else {
+            textoV.setVisibility(View.GONE);
+        }
+    }
+
+    private void ponerFechaHora(Paso p) {
+        Calendar c = Calendar.getInstance();
+        if (p.verFecha && !p.noche) {
+            String f = new SimpleDateFormat("EEEE d 'de' MMMM", new Locale("es")).format(c.getTime());
+            fechaV.setText(Character.toUpperCase(f.charAt(0)) + f.substring(1));
+            fechaV.setVisibility(View.VISIBLE);
+        } else fechaV.setVisibility(View.GONE);
+        if (p.verHora && !p.noche) {
+            int h = c.get(Calendar.HOUR_OF_DAY), m = c.get(Calendar.MINUTE);
+            String hora = p.hora24 ? String.format(Locale.ROOT, "%d:%02d", h, m)
+                    : String.format(Locale.ROOT, "%d:%02d %s", h % 12 == 0 ? 12 : h % 12, m, h < 12 ? "a. m." : "p. m.");
+            horaV.setText(hora);
+            horaV.setVisibility(View.VISIBLE);
+        } else horaV.setVisibility(View.GONE);
+    }
+
+    /** Pone el tamaño de letra más grande (hasta "base") con el que el texto cabe en una línea. */
+    private static float caber(TextView v, float base, int anchoMax) {
+        android.graphics.Paint medidor = new android.graphics.Paint(v.getPaint());
+        String texto = v.getText().toString();
+        int relleno = v.getPaddingLeft() + v.getPaddingRight();
+        float tam = base;
+        medidor.setTextSize(tam);
+        while (tam > base * 0.55f && medidor.measureText(texto) + relleno > anchoMax) {
+            tam *= 0.93f;
+            medidor.setTextSize(tam);
+        }
+        v.setTextSize(TypedValue.COMPLEX_UNIT_PX, tam);
+        v.setMaxWidth(anchoMax);
+        v.setSingleLine(tam > base * 0.56f);
+        return tam;
+    }
+
+    private static void margenes(View v, int arriba, int abajo) {
+        FrameLayout.LayoutParams l = (FrameLayout.LayoutParams) v.getLayoutParams();
+        l.topMargin = arriba;
+        l.bottomMargin = abajo;
+        v.setLayoutParams(l);
+    }
+
+    private TextView etiqueta(Typeface letra) {
+        TextView t = new TextView(this);
+        t.setTextColor(Color.WHITE);
+        t.setTypeface(letra);
+        t.setShadowLayer(8, 0, 2, Color.BLACK);
+        t.setGravity(Gravity.CENTER);
+        t.setIncludeFontPadding(false);
+        t.setPadding(dp(16), dp(4), dp(16), dp(6));
+        GradientDrawable fondo = new GradientDrawable();
+        fondo.setColor(0x55000000);
+        fondo.setCornerRadius(dp(22));
+        t.setBackgroundDrawable(fondo);
+        t.setVisibility(View.GONE);
+        return t;
+    }
+
+    private Typeface fuente(String asset, Typeface siFalla) {
+        try { return Typeface.createFromAsset(getAssets(), asset); } catch (Exception e) { return siFalla; }
+    }
+
+    /** Al girar la tablet: rearmar todo para la nueva posición (marco, foto y textos). */
+    @Override
+    public void onConfigurationChanged(android.content.res.Configuration nueva) {
+        super.onConfigurationChanged(nueva);
+        ui.removeCallbacks(tick);
+        ui.postDelayed(tick, 350); // esperar a que la pantalla tenga el tamaño nuevo
     }
 
     // ------------------------------------------------------------------ archivos

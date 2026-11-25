@@ -9,8 +9,13 @@
 # ---------------- AJUSTES ----------------
 segundos = 20
 orden = aleatorio
-orientacion = horizontal
+# auto = gira con la tablet (horizontal o vertical) | horizontal | vertical
+orientacion = auto
 posicion texto = abajo
+# Fecha arriba y hora abajo (si / no); formato de hora 12 o 24
+mostrar fecha = si
+mostrar hora = si
+formato hora = 12
 # Cómo acomodar las fotos dentro del marco:
 #   inteligente = las verticales se ven completas con fondo difuminado a los lados,
 #                 las horizontales llenan el hueco (recomendado)

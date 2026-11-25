@@ -29,13 +29,16 @@ public class Agenda {
         public final List<String> archivos = new ArrayList<String>();
         public String texto;
         public String motivo = "sin marco";
+        /** true = no hay versión vertical del marco: hay que girar el horizontal 90°. */
+        public boolean girar;
     }
 
     // Ajustes
     public int segundos = 20;
     public boolean aleatorio = true;
     public int nocheInicio = -1, nocheFin = -1; // minutos desde medianoche
-    public String orientacion = "horizontal";
+    public String orientacion = "auto";      // auto (gira con la tablet) | horizontal | vertical
+    public boolean mostrarFecha = true, mostrarHora = true, hora24 = false;
     public boolean textoArriba = false;
     public String pin = null;               // PIN para entrar desde el teléfono
     public String ajuste = "inteligente"; // inteligente | recortar | completa
@@ -123,6 +126,9 @@ public class Agenda {
         if (clave.equals("segundos")) { segundos = Math.max(3, Integer.parseInt(valor)); return true; }
         if (clave.equals("orden")) { aleatorio = !normalizar(valor).startsWith("nombre"); return true; }
         if (clave.equals("orientacion")) { orientacion = normalizar(valor); return true; }
+        if (clave.equals("mostrar fecha")) { mostrarFecha = esSi(valor); return true; }
+        if (clave.equals("mostrar hora")) { mostrarHora = esSi(valor); return true; }
+        if (clave.equals("formato hora")) { hora24 = valor.trim().startsWith("24"); return true; }
         if (clave.equals("pin")) { pin = valor.isEmpty() ? null : valor; return true; }
         if (clave.equals("ajuste")) { ajuste = normalizar(valor); return true; }
         if (clave.equals("posicion texto")) { textoArriba = normalizar(valor).startsWith("arriba"); return true; }
@@ -149,7 +155,10 @@ public class Agenda {
     }
 
     /** @param disponibles nombres de archivo de la carpeta marcos (con extensión) */
-    public Resultado decidir(Calendar hoy, List<String> disponibles) {
+    public Resultado decidir(Calendar hoy, List<String> disponibles) { return decidir(hoy, disponibles, false); }
+
+    /** @param vertical la tablet está parada: se prefiere "marco-vertical.png" (o se gira el horizontal). */
+    public Resultado decidir(Calendar hoy, List<String> disponibles, boolean vertical) {
         Resultado r = new Resultado();
         int dia = hoy.get(Calendar.DAY_OF_MONTH), mes = hoy.get(Calendar.MONTH) + 1;
         int clave = mes * 100 + dia;
@@ -162,14 +171,14 @@ public class Agenda {
             for (Cumple c : hoyCumplen) nombres.add(c.nombre);
             r.texto = textoCumple.replace("{nombre}", unir(nombres));
             for (Cumple c : hoyCumplen)
-                if (c.marco != null && usar(r, c.marco, disponibles, "cumpleaños de " + c.nombre)) return r;
-            if (usar(r, marcoCumple, disponibles, "cumpleaños de " + unir(nombres))) return r;
+                if (c.marco != null && usar(r, c.marco, disponibles, "cumpleaños de " + c.nombre, vertical)) return r;
+            if (usar(r, marcoCumple, disponibles, "cumpleaños de " + unir(nombres), vertical)) return r;
         }
         // 2. Fechas especiales
         for (Fecha f : fechas) {
             if (!coincide(f, hoy)) continue;
             if (r.texto == null && f.texto != null) r.texto = f.texto;
-            if (usar(r, f.marco, disponibles, "fecha especial (" + f.marco + ")")) return r;
+            if (usar(r, f.marco, disponibles, "fecha especial (" + f.marco + ")", vertical)) return r;
         }
         // 3. Temporadas
         for (Temporada t : temporadas) {
@@ -177,12 +186,12 @@ public class Agenda {
                     : (clave >= t.desde || clave <= t.hasta);
             if (!dentro) continue;
             if (r.texto == null && t.texto != null) r.texto = t.texto;
-            if (usar(r, t.marco, disponibles, "temporada (" + t.marco + ")")) return r;
+            if (usar(r, t.marco, disponibles, "temporada (" + t.marco + ")", vertical)) return r;
         }
         // 4. Mes
-        if (meses[mes] != null && usar(r, meses[mes], disponibles, "marco del mes (" + meses[mes] + ")")) return r;
+        if (meses[mes] != null && usar(r, meses[mes], disponibles, "marco del mes (" + meses[mes] + ")", vertical)) return r;
         // 5. Normal
-        usar(r, marcoNormal, disponibles, "marco normal");
+        usar(r, marcoNormal, disponibles, "marco normal", vertical);
         return r;
     }
 
@@ -211,8 +220,10 @@ public class Agenda {
         return cal;
     }
 
-    private static boolean usar(Resultado r, String marco, List<String> disponibles, String motivo) {
-        List<String> encontrados = buscarMarcos(marco, disponibles);
+    private static boolean usar(Resultado r, String marco, List<String> disponibles, String motivo, boolean vertical) {
+        List<String> encontrados = vertical ? buscarMarcos(marco + "-vertical", disponibles) : new ArrayList<String>();
+        r.girar = vertical && encontrados.isEmpty();
+        if (encontrados.isEmpty()) encontrados = buscarMarcos(marco, disponibles);
         if (encontrados.isEmpty()) return false;
         r.archivos.addAll(encontrados);
         r.motivo = motivo;
@@ -247,6 +258,11 @@ public class Agenda {
         int d = Integer.parseInt(m.group(1)), mes = Integer.parseInt(m.group(2));
         if (!valida(d, mes)) throw new IllegalArgumentException("fecha inválida '" + s.trim() + "'");
         return new int[]{d, mes};
+    }
+
+    private static boolean esSi(String v) {
+        String n = normalizar(v);
+        return !(n.startsWith("no") || n.equals("0") || n.startsWith("ocult"));
     }
 
     private static boolean valida(int d, int m) { return m >= 1 && m <= 12 && d >= 1 && d <= 31; }
