@@ -36,6 +36,8 @@ import javax.net.ssl.X509TrustManager;
 final class Red {
 
     private static SSLSocketFactory fabrica;
+    /** Qué motor de conexión segura se está usando (se muestra en la información). */
+    static String modo = "sin preparar";
 
     static synchronized void preparar(Context ctx) {
         if (fabrica != null) return;
@@ -51,11 +53,25 @@ final class Red {
                 try { ks.setCertificateEntry("raiz" + (i++), cf.generateCertificate(in)); } finally { in.close(); }
             }
             X509TrustManager incluidos = gestor(ks);
-            SSLContext tls = SSLContext.getInstance("TLS");
-            tls.init(null, new TrustManager[]{new Combinado(sistema, incluidos)}, null);
-            fabrica = new ConTls12(tls.getSocketFactory());
+            TrustManager[] confianza = new TrustManager[]{new Combinado(sistema, incluidos)};
+            java.security.Provider moderno = null;
+            try { moderno = org.conscrypt.Conscrypt.newProvider(); } catch (Throwable t) { moderno = null; }
+            if (moderno != null) {
+                // Motor moderno incluido en la app: TLS 1.3 y cifrados actuales aunque la tablet sea de 2015.
+                SSLContext tls = SSLContext.getInstance("TLS", moderno);
+                tls.init(null, confianza, null);
+                fabrica = tls.getSocketFactory();
+                modo = "Conscrypt (moderno)";
+            } else {
+                SSLContext tls = SSLContext.getInstance("TLS");
+                tls.init(null, confianza, null);
+                fabrica = new ConTls12(tls.getSocketFactory());
+                modo = "del sistema (TLS 1.2)";
+            }
+            HttpsURLConnection.setDefaultSSLSocketFactory(fabrica); // también para las redirecciones
         } catch (Exception e) {
             fabrica = (SSLSocketFactory) SSLSocketFactory.getDefault();
+            modo = "básico (" + e.getClass().getSimpleName() + ")";
         }
     }
 

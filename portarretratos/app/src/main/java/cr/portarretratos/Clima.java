@@ -54,8 +54,8 @@ final class Clima {
             // "San José, Costa Rica": se busca el nombre y, si hay país, se prefiere ese país
             String[] partes = c.split(",", 2);
             String nombre = partes[0].trim(), pais = partes.length > 1 ? Agenda.normalizar(partes[1]) : "";
-            JSONObject g = new JSONObject(Red.pedir("GET", GEO + "/v1/search?count=10&language=es&name="
-                    + URLEncoder.encode(nombre, "UTF-8"), null));
+            JSONObject g = new JSONObject(pedir(GEO + "/v1/search?count=10&language=es&name="
+                    + URLEncoder.encode(nombre, "UTF-8")));
             JSONArray res = g.optJSONArray("results");
             if (res == null || res.length() == 0) { error = "No encuentro la ciudad «" + c + "» para el clima"; texto = null; ultima = System.currentTimeMillis(); return; }
             JSONObject elegido = res.getJSONObject(0);
@@ -67,13 +67,22 @@ final class Clima {
             lon = elegido.getDouble("longitude");
             ciudadBuscada = c;
         }
-        JSONObject w = new JSONObject(Red.pedir("GET", API + "/v1/forecast?latitude=" + lat + "&longitude=" + lon
-                + "&current=temperature_2m,weather_code,is_day&timezone=auto", null));
+        JSONObject w = new JSONObject(pedir(API + "/v1/forecast?latitude=" + lat + "&longitude=" + lon
+                + "&current=temperature_2m,weather_code,is_day&timezone=auto"));
         JSONObject actual = w.getJSONObject("current");
         long temp = Math.round(actual.getDouble("temperature_2m"));
         texto = temp + "° " + icono(actual.optInt("weather_code"), actual.optInt("is_day", 1) == 1);
         error = null;
         ultima = System.currentTimeMillis();
+    }
+
+    /** Pide por https; si la tablet no logra la conexión segura, prueba por http (datos públicos). */
+    private static String pedir(String url) throws Exception {
+        try { return Red.pedir("GET", url, null); }
+        catch (javax.net.ssl.SSLException e) {
+            if (!url.startsWith("https://")) throw e;
+            return Red.pedir("GET", "http://" + url.substring(8), null);
+        }
     }
 
     /** Códigos WMO de Open-Meteo → un símbolo sencillo. */

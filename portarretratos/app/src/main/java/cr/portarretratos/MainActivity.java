@@ -358,6 +358,9 @@ public class MainActivity extends Activity {
                 else sb.append("\n📱 Teléfono: la tablet no está conectada al WiFi");
                 for (String a : agenda.avisos) sb.append("\n⚠ ").append(a);
                 if (ultimaFalla != null) sb.append("\n⚠ No se pudo abrir: ").append(ultimaFalla);
+                sb.append("\nOrientación: ").append(agenda.orientacion)
+                  .append(" · pantalla ").append(ancho > alto ? "horizontal" : "vertical")
+                  .append(" · conexión ").append(Red.modo);
                 if (!agenda.clima.isEmpty())
                     sb.append("\nClima (").append(agenda.clima).append("): ")
                       .append(clima.texto != null ? clima.texto : clima.error != null ? "⚠ " + clima.error : "buscando…");
