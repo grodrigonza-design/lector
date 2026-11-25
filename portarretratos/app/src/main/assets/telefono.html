@@ -179,6 +179,17 @@ h2{font-size:17px;margin:0 0 4px}
       <button id="guardar" class="grande" style="margin-top:12px">Guardar</button>
       <div id="msgFechas" class="msg"></div>
     </div>
+    <div class="card">
+      <h2>Actualizar la app</h2>
+      <p id="appInfo" class="nota">Cuando haya una versión nueva del portarretratos.</p>
+      <div class="fila" style="margin-top:10px">
+        <button id="appInternet">⬇️ Descargar la última versión</button>
+        <label class="boton sec" for="archApk" style="background:transparent;color:var(--accent);border:1.5px solid var(--accent)">Subir APK</label>
+      </div>
+      <input id="archApk" type="file" accept=".apk,application/vnd.android.package-archive" class="oculto">
+      <p class="nota">Después, en la pantalla de la tablet aparece el instalador: toque <b>Instalar</b>. Las fotos y ajustes no se pierden.</p>
+      <div id="msgApp" class="msg"></div>
+    </div>
   </section>
 </div>
 </main>
@@ -237,7 +248,7 @@ document.querySelectorAll('nav button').forEach(function (b) {
     ['fotos', 'marcos', 'fechas', 'facebook'].forEach(function (t) { $('tab-' + t).classList.toggle('oculto', t !== b.dataset.tab); });
     if (b.dataset.tab === 'fotos') cargarFotos().catch(function () {});
     if (b.dataset.tab === 'marcos') cargarMarcos();
-    if (b.dataset.tab === 'fechas') cargarFechas();
+    if (b.dataset.tab === 'fechas') { cargarFechas(); cargarApp(); }
     clearInterval(fbTimer);
     if (b.dataset.tab === 'facebook') { cargarFb(); fbTimer = setInterval(cargarFb, 4000); }
   });
@@ -397,6 +408,29 @@ $('formFb').addEventListener('submit', function (e) {
 $('fbConectar').addEventListener('click', function () { accionFb('conectar'); });
 $('fbRevisar').addEventListener('click', function () { accionFb('revisar'); });
 $('fbDesconectar').addEventListener('click', function () { if (confirm('¿Desconectar Facebook? Las fotos ya descargadas se quedan.')) accionFb('desconectar'); });
+
+/* ---------- actualizar la app ---------- */
+function cargarApp() {
+  api('/api/app').then(function (r) { return r.json(); }).then(function (j) {
+    $('appInfo').textContent = 'Versión instalada el ' + new Date(j.instalada).toLocaleString() + '.';
+    if (j.estado) aviso($('msgApp'), j.estado, /No se pudo/.test(j.estado) ? 'error' : 'ok');
+  }).catch(function () {});
+}
+$('appInternet').addEventListener('click', function () {
+  aviso($('msgApp'), 'Pidiendo a la tablet que descargue…');
+  api('/api/app/internet', { method: 'POST' }).then(function () {
+    var n = 0, t = setInterval(function () { cargarApp(); if (++n > 30) clearInterval(t); }, 3000);
+  });
+});
+$('archApk').addEventListener('change', function () {
+  var f = this.files[0]; this.value = '';
+  if (!f) return;
+  aviso($('msgApp'), 'Enviando ' + (f.size / 1048576).toFixed(1) + ' MB a la tablet…');
+  api('/api/app/subir', { method: 'POST', body: f })
+    .then(function (r) { return r.json().then(function (j) { return [r.ok, j]; }); })
+    .then(function (res) { aviso($('msgApp'), res[0] ? 'Listo: en la pantalla de la tablet toque «Instalar».' : (res[1].error || 'No se pudo.'), res[0] ? 'ok' : 'error'); })
+    .catch(function () { aviso($('msgApp'), 'No se pudo enviar.', 'error'); });
+});
 
 /* ---------- inicio ---------- */
 function iniciar() { cargarFotos().then(function () { mostrar('app'); }).catch(function () {}); }

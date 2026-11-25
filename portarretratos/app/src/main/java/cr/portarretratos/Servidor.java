@@ -51,6 +51,12 @@ final class Servidor {
     volatile String pin;
     /** Conexión con Facebook (la pone MainActivity). */
     volatile Facebook facebook;
+    /** Abre el instalador de Android con un APK (lo pone MainActivity). */
+    interface Instalador { void instalar(File apk); }
+    volatile Instalador instalador;
+    static final String URL_ULTIMA =
+            "https://github.com/grodrigonza-design/lector/releases/download/portarretratos/Portarretratos.apk";
+    private volatile String estadoActualizacion = "";
     private int fallos;
     private long bloqueadoHasta;
 
@@ -188,6 +194,7 @@ final class Servidor {
         }
         if (r.equals("/api/fechas") && p.metodo.equals("POST")) { guardarFechas(p, out); return; }
         if (r.startsWith("/api/facebook")) { rutasFacebook(p, out); return; }
+        if (r.startsWith("/api/app")) { rutasApp(p, out); return; }
         json(out, 404, "{\"error\":\"no-existe\"}", null);
     }
 
@@ -354,6 +361,56 @@ final class Servidor {
         else { json(out, 404, "{\"error\":\"no-existe\"}", null); return; }
         dormir(1500); // dar tiempo a que aparezca el código
         json(out, 200, fb.estadoJson(), null);
+    }
+
+    // ------------------------------------------------------------------ actualizar la app
+
+    private void rutasApp(Peticion p, OutputStream out) throws Exception {
+        if (p.ruta.equals("/api/app") && p.metodo.equals("GET")) {
+            long instalada = 0;
+            try { instalada = ctx.getPackageManager().getPackageInfo(ctx.getPackageName(), 0).lastUpdateTime; }
+            catch (Exception ignored) { }
+            json(out, 200, "{\"instalada\":" + instalada + ",\"estado\":" + texto(estadoActualizacion) + "}", null);
+            return;
+        }
+        if (!p.metodo.equals("POST")) { json(out, 405, "{\"error\":\"método\"}", null); return; }
+        final File apk = new File(carpetas.propiaEscritura(), "actualizacion.apk");
+        if (p.ruta.equals("/api/app/subir")) {
+            byte[] datos = leerCuerpo(p, MAX_SUBIDA);
+            if (datos.length < 4 || datos[0] != 'P' || datos[1] != 'K' || datos[2] != 3 || datos[3] != 4) {
+                json(out, 415, "{\"error\":\"Ese archivo no es un APK.\"}", null);
+                return;
+            }
+            escribir(apk, datos);
+            abrirInstalador(apk);
+            json(out, 200, "{\"ok\":true}", null);
+            return;
+        }
+        if (p.ruta.equals("/api/app/internet")) {
+            estadoActualizacion = "Descargando la última versión…";
+            new Thread(new Runnable() {
+                public void run() {
+                    try {
+                        Red.descargar(URL_ULTIMA, apk);
+                        abrirInstalador(apk);
+                    } catch (Exception e) {
+                        estadoActualizacion = "No se pudo descargar: " + Facebook.describir(e)
+                                + ". Use \"Subir APK\" desde la PC o el teléfono.";
+                    }
+                }
+            }, "actualizar").start();
+            json(out, 200, "{\"ok\":true}", null);
+            return;
+        }
+        json(out, 404, "{\"error\":\"no-existe\"}", null);
+    }
+
+    private void abrirInstalador(File apk) {
+        apk.setReadable(true, false); // el instalador de Android es otra app: tiene que poder leerlo
+        Instalador i = instalador;
+        if (i == null) { estadoActualizacion = "La app no está lista para instalar."; return; }
+        i.instalar(apk);
+        estadoActualizacion = "Listo: en la pantalla de la tablet toque «Instalar».";
     }
 
     private static Map<String, String> formulario(String cuerpo) throws IOException {

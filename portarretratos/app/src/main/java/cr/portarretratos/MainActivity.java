@@ -158,6 +158,18 @@ public class MainActivity extends Activity {
         Red.preparar(this);
         facebook = new Facebook(carpetas);
         servidor.facebook = facebook;
+        servidor.instalador = new Servidor.Instalador() {
+            public void instalar(final File apk) {
+                ui.post(new Runnable() {
+                    public void run() {
+                        android.content.Intent i = new android.content.Intent(android.content.Intent.ACTION_VIEW);
+                        i.setDataAndType(android.net.Uri.fromFile(apk), "application/vnd.android.package-archive");
+                        i.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(i);
+                    }
+                });
+            }
+        };
         facebook.iniciar();
     }
 
