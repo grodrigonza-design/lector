@@ -354,7 +354,7 @@ final class Servidor {
             String app = f.get("app_id"), ct = f.get("client_token");
             if (app != null && !app.trim().matches("\\d{5,25}")) { json(out, 400, "{\"error\":\"El App ID son solo números.\"}", null); return; }
             if (ct != null && !ct.trim().matches("[0-9a-fA-F]{16,64}")) { json(out, 400, "{\"error\":\"El Client Token no se ve bien (son letras y números, unos 32).\"}", null); return; }
-            fb.configurar(app, ct, f.get("album"));
+            fb.configurar(app, ct, f.get("album"), f.get("etiquetadas"));
         } else if (r.equals("/api/facebook/conectar")) fb.conectarAhora();
         else if (r.equals("/api/facebook/revisar")) fb.revisarAhora();
         else if (r.equals("/api/facebook/desconectar")) fb.desconectar();

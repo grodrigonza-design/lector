@@ -39,6 +39,9 @@ public class Agenda {
     public int nocheInicio = -1, nocheFin = -1; // minutos desde medianoche
     public String orientacion = "auto";      // auto (gira con la tablet) | horizontal | vertical
     public boolean mostrarFecha = true, mostrarHora = true, hora24 = false;
+    public boolean mostrarPie = true, recuerdos = true;
+    public String clima = "";               // ciudad para el clima ("" = no mostrar)
+    public int avisoCumple = 7;             // avisar cumpleaños próximos con N días (0 = no)
     public boolean textoArriba = false;
     public String pin = null;               // PIN para entrar desde el teléfono
     public String ajuste = "inteligente"; // inteligente | recortar | completa
@@ -128,6 +131,10 @@ public class Agenda {
         if (clave.equals("orientacion")) { orientacion = normalizar(valor); return true; }
         if (clave.equals("mostrar fecha")) { mostrarFecha = esSi(valor); return true; }
         if (clave.equals("mostrar hora")) { mostrarHora = esSi(valor); return true; }
+        if (clave.equals("mostrar pie")) { mostrarPie = esSi(valor); return true; }
+        if (clave.equals("recuerdos")) { recuerdos = esSi(valor); return true; }
+        if (clave.equals("clima")) { clima = esSi(valor) || valor.trim().isEmpty() ? valor.trim() : ""; return true; }
+        if (clave.equals("aviso cumple")) { try { avisoCumple = Math.max(0, Integer.parseInt(valor.replaceAll("[^0-9]", ""))); } catch (NumberFormatException e) { avisoCumple = 0; } return true; }
         if (clave.equals("formato hora")) { hora24 = valor.trim().startsWith("24"); return true; }
         if (clave.equals("pin")) { pin = valor.isEmpty() ? null : valor; return true; }
         if (clave.equals("ajuste")) { ajuste = normalizar(valor); return true; }
@@ -193,6 +200,21 @@ public class Agenda {
         // 5. Normal
         usar(r, marcoNormal, disponibles, "marco normal", vertical);
         return r;
+    }
+
+    /** "Mañana: cumpleaños de Ana" / "En 3 días: cumpleaños de Ana y Luis", o null. No cuenta el de hoy. */
+    public String proximoCumple(Calendar hoy) {
+        if (avisoCumple <= 0) return null;
+        Calendar c = (Calendar) hoy.clone();
+        for (int d = 1; d <= avisoCumple; d++) {
+            c.add(Calendar.DAY_OF_MONTH, 1);
+            List<String> nombres = new ArrayList<String>();
+            for (Cumple k : cumples)
+                if (k.dia == c.get(Calendar.DAY_OF_MONTH) && k.mes == c.get(Calendar.MONTH) + 1) nombres.add(k.nombre);
+            if (!nombres.isEmpty())
+                return (d == 1 ? "Mañana" : "En " + d + " días") + ": cumpleaños de " + unir(nombres) + " 🎂";
+        }
+        return null;
     }
 
     private boolean coincide(Fecha f, Calendar hoy) {

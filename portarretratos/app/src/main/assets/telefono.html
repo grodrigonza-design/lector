@@ -165,6 +165,10 @@ h2{font-size:17px;margin:0 0 4px}
         <input id="fbApp" type="text" inputmode="numeric" placeholder="App ID (solo números)" autocomplete="off">
         <input id="fbToken" type="text" placeholder="Client Token" autocomplete="off" autocapitalize="off" style="margin-top:8px">
         <input id="fbAlbum" type="text" placeholder="Álbum (opcional: vacío = todas sus fotos)" style="margin-top:8px">
+        <label style="display:flex;gap:10px;align-items:center;margin-top:10px;font-size:15px">
+          <input id="fbEtiquetadas" type="checkbox" checked style="width:22px;height:22px">
+          Incluir fotos donde la etiquetan (las que suben sus familiares)
+        </label>
         <button class="grande" style="margin-top:10px">Guardar</button>
       </form>
       <button id="fbDesconectar" class="sec oculto" style="width:100%;margin-top:10px">Desconectar Facebook</button>
@@ -387,7 +391,7 @@ function pintarFb(e) {
   $('fbRevisar').classList.toggle('oculto', !e.conectado);
   $('fbDesconectar').classList.toggle('oculto', !e.conectado);
   aviso($('msgFb'), e.error ? '⚠ ' + e.error : '', e.error ? 'error' : '');
-  if (!fbFormLleno) { $('fbApp').value = e.app_id || ''; $('fbAlbum').value = e.album || ''; fbFormLleno = true; }
+  if (!fbFormLleno) { $('fbApp').value = e.app_id || ''; $('fbAlbum').value = e.album || ''; $('fbEtiquetadas').checked = e.etiquetadas !== false; fbFormLleno = true; }
 }
 function cargarFb() {
   return api('/api/facebook').then(function (r) { return r.json(); }).then(pintarFb).catch(function () {});
@@ -401,7 +405,8 @@ function accionFb(ruta, cuerpo) {
 }
 $('formFb').addEventListener('submit', function (e) {
   e.preventDefault();
-  var datos = 'app_id=' + encodeURIComponent($('fbApp').value.trim()) + '&album=' + encodeURIComponent($('fbAlbum').value.trim());
+  var datos = 'app_id=' + encodeURIComponent($('fbApp').value.trim()) + '&album=' + encodeURIComponent($('fbAlbum').value.trim())
+    + '&etiquetadas=' + ($('fbEtiquetadas').checked ? 'si' : 'no');
   if ($('fbToken').value.trim()) datos += '&client_token=' + encodeURIComponent($('fbToken').value.trim());
   accionFb('config', datos).then(function () { $('fbToken').value = ''; });
 });

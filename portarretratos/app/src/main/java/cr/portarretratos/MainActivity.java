@@ -39,6 +39,7 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -55,7 +56,7 @@ public class MainActivity extends Activity {
     private final ImageView[] fotoV = new ImageView[2];
     private int frente = 0;
     private ImageView marcoV;
-    private TextView textoV, infoV, avisoV, fbV, fechaV, horaV;
+    private TextView textoV, infoV, avisoV, fbV, fechaV, horaV, pieV;
     private Typeface letraFecha, letraHora;
     private View nocheV;
 
@@ -64,6 +65,9 @@ public class MainActivity extends Activity {
     private Carpetas carpetas;
     private Servidor servidor;
     private Facebook facebook;
+    private final Clima clima = new Clima();
+    private volatile boolean retroceder = false;
+    private final java.util.Map<String, Long> fechasFotos = new java.util.HashMap<String, Long>();
     private final java.util.Map<String, File> marcosArch = new java.util.HashMap<String, File>();
     private Agenda agenda = new Agenda();
     private long configMod = -2, ultimoEscaneo = 0;
@@ -80,7 +84,7 @@ public class MainActivity extends Activity {
     private final Runnable ocultarInfo = new Runnable() { public void run() { infoV.setVisibility(View.GONE); } };
 
     private static class Paso {
-        Bitmap foto, marco; String texto, info, error; boolean noche, textoArriba; int segundos = 20;
+        Bitmap foto, marco; String texto, info, error, pie; boolean noche, textoArriba; int segundos = 20;
         Rect ventana; int ancho, alto, textoDesde, textoHasta, textoAncho, textoAnchoArriba;
         boolean verFecha = true, verHora = true, hora24;
         String orientacion;
@@ -125,6 +129,9 @@ public class MainActivity extends Activity {
         // Fecha (arriba, letra manuscrita) y hora (abajo), dentro del hueco del marco
         letraFecha = fuente("fonts/DancingScript-Bold.ttf", Typeface.create(Typeface.SERIF, Typeface.BOLD_ITALIC));
         letraHora = fuente("fonts/PlayfairDisplay-Bold.ttf", Typeface.create(Typeface.SERIF, Typeface.BOLD));
+        pieV = etiqueta(Typeface.create(Typeface.SERIF, Typeface.ITALIC));
+        raiz.addView(pieV, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.CENTER_HORIZONTAL));
         fechaV = etiqueta(letraFecha);
         raiz.addView(fechaV, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT,
                 FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.CENTER_HORIZONTAL));
@@ -158,8 +165,20 @@ public class MainActivity extends Activity {
         raiz.addView(nocheV, lleno());
 
         // Tocar: siguiente foto + información. Tocar de noche: enciende 1 minuto.
-        raiz.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) { mostrarInfo = true; siguiente(); }
+        final android.view.GestureDetector gestos = new android.view.GestureDetector(this,
+                new android.view.GestureDetector.SimpleOnGestureListener() {
+                    @Override public boolean onDown(android.view.MotionEvent e) { return true; }
+                    @Override public boolean onSingleTapUp(android.view.MotionEvent e) { mostrarInfo = true; siguiente(); return true; }
+                    @Override public boolean onFling(android.view.MotionEvent a, android.view.MotionEvent b, float vx, float vy) {
+                        float dx = b.getX() - a.getX();
+                        if (Math.abs(dx) < dp(60) || Math.abs(dx) < Math.abs(b.getY() - a.getY())) return false;
+                        if (dx > 0) retroceder = true; // deslizar a la derecha = foto anterior
+                        siguiente();
+                        return true;
+                    }
+                });
+        raiz.setOnTouchListener(new View.OnTouchListener() {
+            public boolean onTouch(View v, android.view.MotionEvent e) { return gestos.onTouchEvent(e); }
         });
         setContentView(raiz);
         pantallaCompleta();
@@ -183,13 +202,14 @@ public class MainActivity extends Activity {
             }
         };
         facebook.iniciar();
+        clima.iniciar();
     }
 
     private volatile boolean mostrarInfo = true; // al abrir, mostrar la dirección para el teléfono
 
     @Override protected void onResume() { super.onResume(); activa = true; siguiente(); ui.postDelayed(reloj, 15000); }
     @Override protected void onPause() { super.onPause(); activa = false; ui.removeCallbacks(tick); ui.removeCallbacks(reloj); }
-    @Override protected void onDestroy() { super.onDestroy(); fondo.shutdownNow(); if (servidor != null) servidor.detener(); if (facebook != null) facebook.detener(); }
+    @Override protected void onDestroy() { super.onDestroy(); fondo.shutdownNow(); if (servidor != null) servidor.detener(); if (facebook != null) facebook.detener(); clima.detener(); }
 
     @Override
     public void onWindowFocusChanged(boolean foco) {
@@ -304,6 +324,8 @@ public class MainActivity extends Activity {
             // Si una foto no se puede abrir, probar con las siguientes (hasta 8) en vez de dejar el marco vacío.
             File foto = null;
             Bitmap original = null;
+            if (retroceder && !fotos.isEmpty()) { idxFoto = ((idxFoto - 2) % fotos.size() + fotos.size()) % fotos.size(); }
+            retroceder = false;
             for (int intento = 0; intento < 8 && original == null && !fotos.isEmpty(); intento++) {
                 if (idxFoto >= fotos.size()) { idxFoto = 0; ultimoEscaneo = 0; recargarSiHaceFalta(); }
                 if (fotos.isEmpty()) break;
@@ -314,7 +336,9 @@ public class MainActivity extends Activity {
             if (original != null) {
                 p.foto = Fotos.componer(original, p.ventana, ancho, alto, agenda.ajuste);
                 original.recycle();
+                if (agenda.mostrarPie) p.pie = pieDeFoto(foto, ahora);
             }
+            if (p.texto == null) p.texto = agenda.proximoCumple(ahora); // "En 3 días: cumpleaños de…"
 
             if (info) {
                 SimpleDateFormat f = new SimpleDateFormat("EEEE d 'de' MMMM yyyy, HH:mm", new Locale("es"));
@@ -334,6 +358,9 @@ public class MainActivity extends Activity {
                 else sb.append("\n📱 Teléfono: la tablet no está conectada al WiFi");
                 for (String a : agenda.avisos) sb.append("\n⚠ ").append(a);
                 if (ultimaFalla != null) sb.append("\n⚠ No se pudo abrir: ").append(ultimaFalla);
+                if (!agenda.clima.isEmpty())
+                    sb.append("\nClima (").append(agenda.clima).append("): ")
+                      .append(clima.texto != null ? clima.texto : clima.error != null ? "⚠ " + clima.error : "buscando…");
                 p.info = sb.toString();
             }
         } catch (Throwable t) {
@@ -413,6 +440,13 @@ public class MainActivity extends Activity {
         margenes(fechaV, arriba, 0);
         margenes(horaV, 0, abajo);
         int altoFecha = p.verFecha ? (int) (tamFecha * 1.45f) + dp(12) + sep / 2 : 0;
+        if (p.pie != null && !p.noche) {
+            pieV.setText(p.pie);
+            float tamPie = caber(pieV, corto * 0.042f, (int) Math.min(anchoHueco * 0.9f, p.textoAnchoArriba * 0.95f));
+            margenes(pieV, arriba + altoFecha, 0);
+            pieV.setVisibility(View.VISIBLE);
+            altoFecha += (int) (tamPie * 1.5f) + dp(10) + sep / 2;
+        } else pieV.setVisibility(View.GONE);
         int altoHora = p.verHora ? (int) (tamHora * 1.45f) + dp(12) + sep / 2 : 0;
 
         if (p.texto != null && !p.texto.isEmpty()) {
@@ -442,9 +476,72 @@ public class MainActivity extends Activity {
             int h = c.get(Calendar.HOUR_OF_DAY), m = c.get(Calendar.MINUTE);
             String hora = p.hora24 ? String.format(Locale.ROOT, "%d:%02d", h, m)
                     : String.format(Locale.ROOT, "%d:%02d %s", h % 12 == 0 ? 12 : h % 12, m, h < 12 ? "a. m." : "p. m.");
-            horaV.setText(hora);
+            String tiempo = clima.texto;
+            horaV.setText(tiempo == null ? hora : hora + "   " + tiempo);
             horaV.setVisibility(View.VISIBLE);
         } else horaV.setVisibility(View.GONE);
+    }
+
+    // ------------------------------------------------------------------ pie de foto y recuerdos
+
+    /** "Paseo a la playa · De Ana · 3 de marzo de 2025", o "Un día como hoy · hace 3 años". */
+    private String pieDeFoto(File foto, Calendar hoy) {
+        Properties d = datosFoto(foto);
+        long fecha = fechaDe(foto);
+        List<String> partes = new ArrayList<String>();
+        String texto = d.getProperty("texto", "").replaceAll("\\s+", " ").trim();
+        if (texto.length() > 70) texto = texto.substring(0, 67).trim() + "…";
+        if (!texto.isEmpty()) partes.add(texto);
+        if (d.getProperty("de") != null) partes.add("De " + d.getProperty("de"));
+        int anios = aniosAtras(fecha, hoy);
+        if (anios > 0) partes.add("Un día como hoy · hace " + anios + (anios == 1 ? " año" : " años"));
+        else if (fecha > 0) partes.add(new SimpleDateFormat("d 'de' MMMM 'de' yyyy", new Locale("es")).format(new java.util.Date(fecha)));
+        if (partes.isEmpty()) return null;
+        StringBuilder sb = new StringBuilder();
+        for (String x : partes) { if (sb.length() > 0) sb.append("  ·  "); sb.append(x); }
+        return sb.toString();
+    }
+
+    /** Si la foto es de este mismo día y mes de un año anterior, cuántos años hace; si no, 0. */
+    private static int aniosAtras(long fecha, Calendar hoy) {
+        if (fecha <= 0) return 0;
+        Calendar c = Calendar.getInstance();
+        c.setTimeInMillis(fecha);
+        if (c.get(Calendar.DAY_OF_MONTH) != hoy.get(Calendar.DAY_OF_MONTH) || c.get(Calendar.MONTH) != hoy.get(Calendar.MONTH)) return 0;
+        return Math.max(0, hoy.get(Calendar.YEAR) - c.get(Calendar.YEAR));
+    }
+
+    /** Datos guardados al bajar la foto de Facebook (fb-123.txt junto a fb-123.jpg). */
+    private static Properties datosFoto(File foto) {
+        Properties d = new Properties();
+        String n = foto.getName();
+        int punto = n.lastIndexOf('.');
+        File txt = new File(foto.getParentFile(), (punto > 0 ? n.substring(0, punto) : n) + ".txt");
+        if (txt.isFile()) {
+            try {
+                java.io.Reader r = new java.io.InputStreamReader(new FileInputStream(txt), "UTF-8");
+                try { d.load(r); } finally { r.close(); }
+            } catch (Exception ignored) { }
+        }
+        return d;
+    }
+
+    /** Fecha de la foto: la de Facebook, o la que guardó la cámara (EXIF). 0 si no se sabe. */
+    private long fechaDe(File foto) {
+        String clave = foto.getAbsolutePath() + "|" + foto.lastModified();
+        Long guardada = fechasFotos.get(clave);
+        if (guardada != null) return guardada;
+        long fecha = 0;
+        try { fecha = Long.parseLong(datosFoto(foto).getProperty("fecha", "0")); } catch (NumberFormatException ignored) { }
+        if (fecha == 0) {
+            try {
+                String exif = new ExifInterface(foto.getAbsolutePath()).getAttribute(ExifInterface.TAG_DATETIME);
+                if (exif != null && exif.length() >= 19)
+                    fecha = new SimpleDateFormat("yyyy:MM:dd HH:mm:ss", Locale.ROOT).parse(exif).getTime();
+            } catch (Exception ignored) { }
+        }
+        fechasFotos.put(clave, fecha);
+        return fecha;
     }
 
     /** Pone el tamaño de letra más grande (hasta "base") con el que el texto cabe en una línea. */
@@ -509,6 +606,7 @@ public class MainActivity extends Activity {
             configMod = mod;
             agenda = conf == null ? new Agenda() : Agenda.leer(leerLineas(conf));
             servidor.pin = agenda.pin;
+            clima.ciudad(agenda.clima);
             ultimoEscaneo = 0;
         }
         long ahora = System.currentTimeMillis();
@@ -519,9 +617,14 @@ public class MainActivity extends Activity {
         if (agenda.aleatorio) Collections.shuffle(todas);
         else Collections.sort(todas);
         // Las recién subidas (últimos 15 minutos) se muestran primero.
+        // Orden: recién subidas (15 min) → "un día como hoy" de otros años → el resto.
         fotos.clear();
         for (File f : todas) if (ahora - f.lastModified() < 15 * 60 * 1000L) fotos.add(f);
-        for (File f : todas) if (ahora - f.lastModified() >= 15 * 60 * 1000L) fotos.add(f);
+        if (agenda.recuerdos) {
+            Calendar hoy = Calendar.getInstance();
+            for (File f : todas) if (!fotos.contains(f) && aniosAtras(fechaDe(f), hoy) > 0) fotos.add(f);
+        }
+        for (File f : todas) if (!fotos.contains(f)) fotos.add(f);
         idxFoto = 0;
 
         marcosArch.clear();

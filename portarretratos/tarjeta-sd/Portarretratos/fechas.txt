@@ -16,6 +16,13 @@ posicion texto = abajo
 mostrar fecha = si
 mostrar hora = si
 formato hora = 12
+# Clima junto a la hora: escriba su ciudad (y país, para no confundirla)
+clima = San José, Costa Rica
+# Pie de foto (texto, quién la subió y fecha) y recuerdos "un día como hoy"
+mostrar pie = si
+recuerdos = si
+# Avisar los cumpleaños que vienen (días antes; 0 = no avisar)
+aviso cumple = 7
 # Cómo acomodar las fotos dentro del marco:
 #   inteligente = las verticales se ven completas con fondo difuminado a los lados,
 #                 las horizontales llenan el hueco (recomendado)

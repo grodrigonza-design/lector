@@ -11,9 +11,7 @@ import java.io.OutputStreamWriter;
 import java.net.URLEncoder;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.Properties;
-import java.util.Set;
 
 /**
  * Trae las fotos que una persona sube a Facebook.
@@ -82,8 +80,9 @@ final class Facebook {
         } catch (Exception e) { error = "No se pudo guardar la configuración: " + e.getMessage(); }
     }
 
-    void configurar(String appId, String clientToken, String album) {
+    void configurar(String appId, String clientToken, String album, String etiquetadas) {
         Properties p = datos();
+        if (etiquetadas != null) p.setProperty("etiquetadas", etiquetadas.equals("no") ? "no" : "si");
         if (appId != null) p.setProperty("app_id", appId.trim());
         if (clientToken != null) p.setProperty("client_token", clientToken.trim());
         if (album != null) p.setProperty("album", album.trim());
@@ -115,7 +114,9 @@ final class Facebook {
 
     int cuantasFotos() {
         String[] n = carpetaFotos().list();
-        return n == null ? 0 : n.length;
+        int c = 0;
+        if (n != null) for (String x : n) if (x.endsWith(".jpg")) c++;
+        return c;
     }
 
     /** Texto para mostrar en la pantalla del portarretratos, o null si no hay nada que avisar. */
@@ -232,22 +233,39 @@ final class Facebook {
         Properties p = datos();
         String token = p.getProperty("token");
         String album = Agenda.normalizar(p.getProperty("album", ""));
-        String url = GRAPH + "/me/photos?type=uploaded&limit=100&fields=" + enc("id,created_time,images,album{name}")
-                + "&access_token=" + enc(token);
+        String yo = p.getProperty("cuenta_id", "");
+        boolean etiquetadas = !"no".equals(p.getProperty("etiquetadas", "si"));
+        File dir = carpetaFotos();
+        int[] cuenta = new int[2]; // nuevas, malas
+        // 1) las fotos que la persona subió  2) las fotos donde otros la etiquetaron
+        if (!traer("uploaded", album, yo, token, dir, cuenta)) return;
+        if (etiquetadas && !traer("tagged", "", yo, token, dir, cuenta)) return;
+        limpiarViejas(dir);
+        p = datos();
+        p.setProperty("ultima_revision", String.valueOf(System.currentTimeMillis()));
+        guardar(p);
+        int nuevas = cuenta[0], malas = cuenta[1];
+        error = malas == 0 ? null : malas + " fotos vinieron en un formato que la tablet no abre (" + ultimoFormatoMalo + ")";
+        ultimoMensaje = nuevas == 0 ? "Sin fotos nuevas" : nuevas + (nuevas == 1 ? " foto nueva" : " fotos nuevas");
+        if (nuevas > 0) carpetas.cambio = true;
+    }
+
+    /** Descarga una lista de fotos ("uploaded" o "tagged"). Devuelve false si el permiso venció. */
+    private boolean traer(String tipoLista, String album, String yo, String token, File dir, int[] cuenta) throws Exception {
+        String url = GRAPH + "/me/photos?type=" + tipoLista + "&limit=100&fields="
+                + enc("id,created_time,name,from{name,id},images,album{name}") + "&access_token=" + enc(token);
         JSONObject r = new JSONObject(Red.pedir("GET", url, null));
         if (r.has("error")) {
             JSONObject e = r.getJSONObject("error");
             if (e.optInt("code") == 190) { // permiso vencido o retirado
                 desconectar();
                 error = "El permiso de Facebook venció: hay que volver a conectar.";
-                return;
+                return false;
             }
             throw new Exception("Facebook: " + e.optString("message"));
         }
         JSONArray lista = r.optJSONArray("data");
-        File dir = carpetaFotos();
-        int nuevas = 0, malas = 0, total = lista == null ? 0 : lista.length();
-        Set<String> vistas = new HashSet<String>();
+        int total = lista == null ? 0 : lista.length();
         for (int i = 0; i < total; i++) {
             JSONObject foto = lista.getJSONObject(i);
             if (!album.isEmpty()) {
@@ -256,7 +274,7 @@ final class Facebook {
             }
             String id = foto.getString("id").replaceAll("[^0-9_]", "");
             File destino = new File(dir, "fb-" + id + ".jpg");
-            vistas.add(destino.getName());
+            guardarDatosFoto(foto, yo, new File(dir, "fb-" + id + ".txt"));
             if (destino.isFile()) {
                 if (Diagnostico.abrible(Diagnostico.tipo(destino))) continue;
                 destino.delete(); // quedó dañada o en un formato que no abre: bajarla otra vez
@@ -268,19 +286,32 @@ final class Facebook {
             if (!Diagnostico.abrible(real)) {
                 // Formato que Android 4.4 no abre (p. ej. HEIC/AVIF): no guardarlo y avisar.
                 destino.delete();
-                malas++;
+                cuenta[1]++;
                 ultimoFormatoMalo = real + " / " + tipo;
                 continue;
             }
-            nuevas++;
+            cuenta[0]++;
         }
-        limpiarViejas(dir);
-        p = datos();
-        p.setProperty("ultima_revision", String.valueOf(System.currentTimeMillis()));
-        guardar(p);
-        error = malas == 0 ? null : malas + " fotos vinieron en un formato que la tablet no abre (" + ultimoFormatoMalo + ")";
-        ultimoMensaje = nuevas == 0 ? "Sin fotos nuevas" : nuevas + (nuevas == 1 ? " foto nueva" : " fotos nuevas");
-        if (nuevas > 0) carpetas.cambio = true;
+        return true;
+    }
+
+    /** Fecha, quién la subió y el texto de la publicación, para el pie de foto. */
+    private static void guardarDatosFoto(JSONObject foto, String yo, File archivo) {
+        try {
+            Properties d = new Properties();
+            String fecha = foto.optString("created_time", "");
+            if (!fecha.isEmpty()) {
+                java.text.SimpleDateFormat f = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ", java.util.Locale.ROOT);
+                d.setProperty("fecha", String.valueOf(f.parse(fecha).getTime()));
+            }
+            JSONObject de = foto.optJSONObject("from");
+            if (de != null && !de.optString("id").equals(yo) && !de.optString("name").isEmpty())
+                d.setProperty("de", de.optString("name"));
+            String texto = foto.optString("name", "").trim();
+            if (!texto.isEmpty()) d.setProperty("texto", texto);
+            OutputStreamWriter w = new OutputStreamWriter(new FileOutputStream(archivo), "UTF-8");
+            try { d.store(w, null); } finally { w.close(); }
+        } catch (Exception ignored) { }
     }
 
     /** La versión más pequeña que todavía se ve bien en la pantalla (≥ 1280 px), o la más grande. */
@@ -298,12 +329,17 @@ final class Facebook {
     }
 
     private static void limpiarViejas(File dir) {
-        File[] fotos = dir.listFiles();
+        File[] fotos = dir.listFiles(new java.io.FileFilter() {
+            public boolean accept(File f) { return f.getName().endsWith(".jpg"); }
+        });
         if (fotos == null || fotos.length <= MAXIMO_FOTOS) return;
         Arrays.sort(fotos, new Comparator<File>() {
             public int compare(File a, File b) { return Long.compare(a.lastModified(), b.lastModified()); }
         });
-        for (int i = 0; i < fotos.length - MAXIMO_FOTOS; i++) fotos[i].delete();
+        for (int i = 0; i < fotos.length - MAXIMO_FOTOS; i++) {
+            fotos[i].delete();
+            new File(dir, fotos[i].getName().replace(".jpg", ".txt")).delete();
+        }
     }
 
     // ------------------------------------------------------------------ estado para el teléfono
@@ -315,6 +351,7 @@ final class Facebook {
             j.put("configurado", configurado());
             j.put("app_id", p.getProperty("app_id", ""));
             j.put("album", p.getProperty("album", ""));
+            j.put("etiquetadas", !"no".equals(p.getProperty("etiquetadas", "si")));
             j.put("conectado", conectado());
             j.put("nombre", p.getProperty("nombre", ""));
             j.put("dias", Math.max(0, venceEn() / DIA));
