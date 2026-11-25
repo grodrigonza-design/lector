@@ -49,6 +49,8 @@ final class Servidor {
     private volatile boolean vivo;
     /** PIN actual (viene de fechas.txt). null = acceso desde el teléfono apagado. */
     volatile String pin;
+    /** Conexión con Facebook (la pone MainActivity). */
+    volatile Facebook facebook;
     private int fallos;
     private long bloqueadoHasta;
 
@@ -185,6 +187,7 @@ final class Servidor {
             return;
         }
         if (r.equals("/api/fechas") && p.metodo.equals("POST")) { guardarFechas(p, out); return; }
+        if (r.startsWith("/api/facebook")) { rutasFacebook(p, out); return; }
         json(out, 404, "{\"error\":\"no-existe\"}", null);
     }
 
@@ -268,7 +271,9 @@ final class Servidor {
         List<File> permitidas = new ArrayList<File>(carpetas.carpetasFotos());
         for (File pr : carpetas.propias()) permitidas.add(new File(pr, "marcos"));
         if (!f.isFile() || !Carpetas.dentroDe(f, permitidas)) { json(out, 404, "{\"error\":\"no existe\"}", null); return; }
-        boolean borrada = f.delete();
+        // Las de Facebook se ocultan: si se borraran, se volverían a descargar.
+        boolean deFacebook = f.getParentFile() != null && f.getParentFile().getName().equals("fotos-facebook");
+        boolean borrada = !deFacebook && f.delete();
         if (!borrada) carpetas.ocultar(f); // fotos de la tarjeta: Android 4.4 no deja borrarlas
         carpetas.cambio = true;
         json(out, 200, "{\"ok\":true,\"oculta\":" + !borrada + "}", null);
@@ -329,6 +334,35 @@ final class Servidor {
                 : "Set-Cookie: pr=" + token(a.pin) + "; Max-Age=31536000; Path=/; HttpOnly\r\n";
         pin = a.pin;
         json(out, 200, sb.append("]}").toString(), cookie);
+    }
+
+    private void rutasFacebook(Peticion p, OutputStream out) throws Exception {
+        Facebook fb = facebook;
+        if (fb == null) { json(out, 503, "{\"error\":\"no disponible\"}", null); return; }
+        String r = p.ruta;
+        if (r.equals("/api/facebook") && p.metodo.equals("GET")) { json(out, 200, fb.estadoJson(), null); return; }
+        if (!p.metodo.equals("POST")) { json(out, 405, "{\"error\":\"método\"}", null); return; }
+        if (r.equals("/api/facebook/config")) {
+            Map<String, String> f = formulario(new String(leerCuerpo(p, 4096), "UTF-8"));
+            String app = f.get("app_id"), ct = f.get("client_token");
+            if (app != null && !app.trim().matches("\\d{5,25}")) { json(out, 400, "{\"error\":\"El App ID son solo números.\"}", null); return; }
+            if (ct != null && !ct.trim().matches("[0-9a-fA-F]{16,64}")) { json(out, 400, "{\"error\":\"El Client Token no se ve bien (son letras y números, unos 32).\"}", null); return; }
+            fb.configurar(app, ct, f.get("album"));
+        } else if (r.equals("/api/facebook/conectar")) fb.conectarAhora();
+        else if (r.equals("/api/facebook/revisar")) fb.revisarAhora();
+        else if (r.equals("/api/facebook/desconectar")) fb.desconectar();
+        else { json(out, 404, "{\"error\":\"no-existe\"}", null); return; }
+        dormir(1500); // dar tiempo a que aparezca el código
+        json(out, 200, fb.estadoJson(), null);
+    }
+
+    private static Map<String, String> formulario(String cuerpo) throws IOException {
+        Map<String, String> m = new HashMap<String, String>();
+        for (String par : cuerpo.split("&")) {
+            int igual = par.indexOf('=');
+            if (igual > 0) m.put(URLDecoder.decode(par.substring(0, igual), "UTF-8"), URLDecoder.decode(par.substring(igual + 1), "UTF-8"));
+        }
+        return m;
     }
 
     /** Primera vez (todavía no hay PIN): se crea desde el teléfono y se guarda en fechas.txt. */

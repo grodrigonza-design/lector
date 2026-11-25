@@ -55,13 +55,14 @@ public class MainActivity extends Activity {
     private final ImageView[] fotoV = new ImageView[2];
     private int frente = 0;
     private ImageView marcoV;
-    private TextView textoV, infoV, avisoV;
+    private TextView textoV, infoV, avisoV, fbV;
     private View nocheV;
 
     // Estado (solo se toca desde el hilo de fondo)
     private File base;
     private Carpetas carpetas;
     private Servidor servidor;
+    private Facebook facebook;
     private final java.util.Map<String, File> marcosArch = new java.util.HashMap<String, File>();
     private Agenda agenda = new Agenda();
     private long configMod = -2, ultimoEscaneo = 0;
@@ -129,6 +130,16 @@ public class MainActivity extends Activity {
         raiz.addView(infoV, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT,
                 FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.START));
 
+        // Recuadro con el código para conectar Facebook (abajo a la izquierda, letra grande)
+        fbV = mensaje(17);
+        fbV.setBackgroundColor(0xE0202A44);
+        fbV.setTextColor(Color.WHITE);
+        fbV.setLineSpacing(0, 1.15f);
+        FrameLayout.LayoutParams lf = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM | Gravity.START);
+        lf.leftMargin = lf.bottomMargin = dp(10);
+        raiz.addView(fbV, lf);
+
         nocheV = new View(this);
         nocheV.setBackgroundColor(Color.BLACK);
         nocheV.setVisibility(View.GONE);
@@ -144,13 +155,17 @@ public class MainActivity extends Activity {
         carpetas = new Carpetas(this);
         servidor = new Servidor(this, carpetas);
         servidor.iniciar();
+        Red.preparar(this);
+        facebook = new Facebook(carpetas);
+        servidor.facebook = facebook;
+        facebook.iniciar();
     }
 
     private volatile boolean mostrarInfo = true; // al abrir, mostrar la dirección para el teléfono
 
     @Override protected void onResume() { super.onResume(); activa = true; siguiente(); }
     @Override protected void onPause() { super.onPause(); activa = false; ui.removeCallbacks(tick); }
-    @Override protected void onDestroy() { super.onDestroy(); fondo.shutdownNow(); if (servidor != null) servidor.detener(); }
+    @Override protected void onDestroy() { super.onDestroy(); fondo.shutdownNow(); if (servidor != null) servidor.detener(); if (facebook != null) facebook.detener(); }
 
     @Override
     public void onWindowFocusChanged(boolean foco) {
@@ -265,6 +280,12 @@ public class MainActivity extends Activity {
                   .append("Marcos: ").append(marcos.size()).append('\n')
                   .append("Carpeta: ").append(base != null ? base.getAbsolutePath() : "(no está la tarjeta)");
                 if (web != null) sb.append("\n📱 Desde el teléfono: ").append(web).append(agenda.pin == null ? "  (cree su PIN ahí)" : "");
+                if (facebook.configurado()) {
+                    sb.append("\nFacebook: ").append(facebook.conectado()
+                            ? "conectado, renovar en " + Math.max(0, facebook.venceEn() / 86400000L) + " días · " + facebook.cuantasFotos() + " fotos"
+                            : "sin conectar");
+                    if (facebook.error != null) sb.append("\n⚠ ").append(facebook.error);
+                }
                 else sb.append("\n📱 Teléfono: la tablet no está conectada al WiFi");
                 for (String a : agenda.avisos) sb.append("\n⚠ ").append(a);
                 p.info = sb.toString();
@@ -321,6 +342,10 @@ public class MainActivity extends Activity {
                 textoV.setVisibility(View.GONE);
             }
         }
+
+        String avisoFb = facebook.avisoPantalla();
+        if (avisoFb != null && !p.noche) { fbV.setText(avisoFb); fbV.setVisibility(View.VISIBLE); }
+        else fbV.setVisibility(View.GONE);
 
         if (p.info != null) {
             infoV.setText(p.info);

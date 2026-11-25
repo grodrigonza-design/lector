@@ -76,6 +76,7 @@ final class Carpetas {
         List<File> res = new ArrayList<File>();
         if (base != null) res.add(new File(base, "fotos"));
         for (File p : propias()) res.add(new File(p, "fotos"));
+        for (File p : propias()) res.add(new File(p, "fotos-facebook"));
         return res;
     }
 

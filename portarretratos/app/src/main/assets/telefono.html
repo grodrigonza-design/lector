@@ -102,6 +102,7 @@ h2{font-size:17px;margin:0 0 4px}
     <button data-tab="fotos" class="activo">Fotos</button>
     <button data-tab="marcos">Marcos</button>
     <button data-tab="fechas">Fechas</button>
+    <button data-tab="facebook">Facebook</button>
   </nav>
 
   <section id="tab-fotos">
@@ -136,6 +137,37 @@ h2{font-size:17px;margin:0 0 4px}
     <div class="card">
       <h2 id="cuentaMarcos">Marcos</h2>
       <div id="listaMarcos" class="marcos"></div>
+    </div>
+  </section>
+
+  <section id="tab-facebook" class="oculto">
+    <div class="card">
+      <h2>Fotos desde Facebook</h2>
+      <p id="fbEstado" class="nota">Cargando…</p>
+      <div id="fbCodigo" class="oculto" style="margin-top:12px;padding:14px;border-radius:12px;background:var(--bg);text-align:center">
+        <div class="nota" style="margin:0">En el celular de la persona, entre a</div>
+        <a href="https://www.facebook.com/device" target="_blank" rel="noopener" style="font-size:20px;font-weight:700;color:var(--accent)">facebook.com/device</a>
+        <div class="nota" style="margin:6px 0 0">y escriba este código:</div>
+        <div id="fbCodigoTexto" style="font:700 34px/1.2 ui-monospace,Menlo,monospace;letter-spacing:.12em;margin-top:4px"></div>
+        <div class="nota" style="margin:6px 0 0">El código también aparece en la pantalla del portarretratos.</div>
+      </div>
+      <div id="fbBotones" class="fila oculto" style="margin-top:12px">
+        <button id="fbConectar">Conectar / renovar</button>
+        <button id="fbRevisar" class="sec">Buscar fotos ahora</button>
+      </div>
+      <div id="msgFb" class="msg"></div>
+    </div>
+    <div class="card">
+      <h2>Datos de la app de Meta</h2>
+      <p class="nota">Se configuran una sola vez. Vienen del panel de desarrolladores de Meta
+        (App settings → Basic → App ID, y Advanced → Client token).</p>
+      <form id="formFb" style="margin-top:10px">
+        <input id="fbApp" type="text" inputmode="numeric" placeholder="App ID (solo números)" autocomplete="off">
+        <input id="fbToken" type="text" placeholder="Client Token" autocomplete="off" autocapitalize="off" style="margin-top:8px">
+        <input id="fbAlbum" type="text" placeholder="Álbum (opcional: vacío = todas sus fotos)" style="margin-top:8px">
+        <button class="grande" style="margin-top:10px">Guardar</button>
+      </form>
+      <button id="fbDesconectar" class="sec oculto" style="width:100%;margin-top:10px">Desconectar Facebook</button>
     </div>
   </section>
 
@@ -202,9 +234,12 @@ $('formCrear').addEventListener('submit', function (e) {
 document.querySelectorAll('nav button').forEach(function (b) {
   b.addEventListener('click', function () {
     document.querySelectorAll('nav button').forEach(function (x) { x.classList.toggle('activo', x === b); });
-    ['fotos', 'marcos', 'fechas'].forEach(function (t) { $('tab-' + t).classList.toggle('oculto', t !== b.dataset.tab); });
+    ['fotos', 'marcos', 'fechas', 'facebook'].forEach(function (t) { $('tab-' + t).classList.toggle('oculto', t !== b.dataset.tab); });
+    if (b.dataset.tab === 'fotos') cargarFotos().catch(function () {});
     if (b.dataset.tab === 'marcos') cargarMarcos();
     if (b.dataset.tab === 'fechas') cargarFechas();
+    clearInterval(fbTimer);
+    if (b.dataset.tab === 'facebook') { cargarFb(); fbTimer = setInterval(cargarFb, 4000); }
   });
 });
 
@@ -324,6 +359,44 @@ $('guardar').addEventListener('click', function () {
       aviso($('msgFechas'), av.length ? 'Guardado, pero revise: ' + av.join(' · ') : 'Guardado. ✔', av.length ? 'error' : 'ok');
     }).catch(function () { aviso($('msgFechas'), 'No se pudo guardar.', 'error'); });
 });
+
+/* ---------- facebook ---------- */
+var fbTimer = null, fbFormLleno = false;
+function pintarFb(e) {
+  var t;
+  if (!e.configurado) t = 'Primero ponga abajo los datos de la app de Meta.';
+  else if (e.conectado) t = '✔ Conectado' + (e.nombre ? ' como ' + e.nombre : '') + '. Hay que renovar en ' + e.dias +
+    (e.dias === 1 ? ' día' : ' días') + '. ' + e.fotos + ' fotos descargadas' +
+    (e.ultima_revision ? ' · última revisión ' + new Date(e.ultima_revision).toLocaleString() : '') + (e.mensaje ? ' · ' + e.mensaje : '') + '.';
+  else t = 'Sin conectar.' + (e.codigo ? '' : ' Toque "Conectar" para obtener un código.');
+  $('fbEstado').textContent = t;
+  $('fbCodigo').classList.toggle('oculto', !e.codigo);
+  $('fbCodigoTexto').textContent = e.codigo || '';
+  $('fbBotones').classList.toggle('oculto', !e.configurado);
+  $('fbRevisar').classList.toggle('oculto', !e.conectado);
+  $('fbDesconectar').classList.toggle('oculto', !e.conectado);
+  aviso($('msgFb'), e.error ? '⚠ ' + e.error : '', e.error ? 'error' : '');
+  if (!fbFormLleno) { $('fbApp').value = e.app_id || ''; $('fbAlbum').value = e.album || ''; fbFormLleno = true; }
+}
+function cargarFb() {
+  return api('/api/facebook').then(function (r) { return r.json(); }).then(pintarFb).catch(function () {});
+}
+function accionFb(ruta, cuerpo) {
+  aviso($('msgFb'), 'Un momento…');
+  return api('/api/facebook/' + ruta, { method: 'POST', body: cuerpo || '' })
+    .then(function (r) { return r.json().then(function (j) { return [r.ok, j]; }); })
+    .then(function (res) { if (res[0]) pintarFb(res[1]); else aviso($('msgFb'), res[1].error || 'No se pudo.', 'error'); })
+    .catch(function () { aviso($('msgFb'), 'No hay conexión con la tablet.', 'error'); });
+}
+$('formFb').addEventListener('submit', function (e) {
+  e.preventDefault();
+  var datos = 'app_id=' + encodeURIComponent($('fbApp').value.trim()) + '&album=' + encodeURIComponent($('fbAlbum').value.trim());
+  if ($('fbToken').value.trim()) datos += '&client_token=' + encodeURIComponent($('fbToken').value.trim());
+  accionFb('config', datos).then(function () { $('fbToken').value = ''; });
+});
+$('fbConectar').addEventListener('click', function () { accionFb('conectar'); });
+$('fbRevisar').addEventListener('click', function () { accionFb('revisar'); });
+$('fbDesconectar').addEventListener('click', function () { if (confirm('¿Desconectar Facebook? Las fotos ya descargadas se quedan.')) accionFb('desconectar'); });
 
 /* ---------- inicio ---------- */
 function iniciar() { cargarFotos().then(function () { mostrar('app'); }).catch(function () {}); }
