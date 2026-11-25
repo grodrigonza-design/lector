@@ -95,10 +95,13 @@ final class Red {
         }
     }
 
-    static void descargar(String url, File destino) throws IOException {
+    /** Descarga a un archivo y devuelve el tipo que dijo el servidor (Content-Type). */
+    static String descargar(String url, File destino) throws IOException {
         HttpURLConnection c = abrir(url);
         try {
+            c.setRequestProperty("Accept", "image/jpeg,image/png,image/webp;q=0.8,*/*;q=0.5");
             if (c.getResponseCode() != 200) throw new IOException("HTTP " + c.getResponseCode());
+            String tipo = c.getContentType();
             File tmp = new File(destino.getAbsolutePath() + ".tmp");
             InputStream in = c.getInputStream();
             FileOutputStream out = new FileOutputStream(tmp);
@@ -109,6 +112,7 @@ final class Red {
             } finally { out.close(); in.close(); }
             if (destino.exists()) destino.delete();
             if (!tmp.renameTo(destino)) throw new IOException("no se pudo guardar");
+            return tipo == null ? "?" : tipo;
         } finally {
             c.disconnect();
         }

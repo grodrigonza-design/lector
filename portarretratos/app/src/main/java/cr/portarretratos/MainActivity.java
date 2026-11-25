@@ -198,6 +198,7 @@ public class MainActivity extends Activity {
 
     private volatile long despiertoHasta = 0;
     private boolean incluidosListos = false;
+    private volatile String ultimaFalla;
 
     private void siguiente() {
         ui.removeCallbacks(tick);
@@ -275,9 +276,16 @@ public class MainActivity extends Activity {
             p.textoHasta = marcoBmp != null ? marcoTexto[1] : alto;
             p.textoAncho = marcoBmp != null ? marcoTexto[agenda.textoArriba ? 3 : 2] : ancho;
 
-            if (idxFoto >= fotos.size()) { idxFoto = 0; ultimoEscaneo = 0; recargarSiHaceFalta(); }
-            File foto = fotos.get(idxFoto++ % fotos.size());
-            Bitmap original = decodificar(foto, ancho, alto, false);
+            // Si una foto no se puede abrir, probar con las siguientes (hasta 8) en vez de dejar el marco vacío.
+            File foto = null;
+            Bitmap original = null;
+            for (int intento = 0; intento < 8 && original == null && !fotos.isEmpty(); intento++) {
+                if (idxFoto >= fotos.size()) { idxFoto = 0; ultimoEscaneo = 0; recargarSiHaceFalta(); }
+                if (fotos.isEmpty()) break;
+                foto = fotos.get(idxFoto++ % fotos.size());
+                original = decodificar(foto, ancho, alto, false);
+                if (original == null) ultimaFalla = foto.getName() + " (" + Diagnostico.tipo(foto) + ")";
+            }
             if (original != null) {
                 p.foto = Fotos.componer(original, p.ventana, ancho, alto, agenda.ajuste);
                 original.recycle();
@@ -300,6 +308,7 @@ public class MainActivity extends Activity {
                 }
                 else sb.append("\n📱 Teléfono: la tablet no está conectada al WiFi");
                 for (String a : agenda.avisos) sb.append("\n⚠ ").append(a);
+                if (ultimaFalla != null) sb.append("\n⚠ No se pudo abrir: ").append(ultimaFalla);
                 p.info = sb.toString();
             }
         } catch (Throwable t) {

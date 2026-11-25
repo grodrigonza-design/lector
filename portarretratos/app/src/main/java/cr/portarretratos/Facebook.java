@@ -43,6 +43,7 @@ final class Facebook {
     volatile long codigoVence;
     volatile String error;
     volatile String ultimoMensaje = "";
+    private String ultimoFormatoMalo = "";
 
     // Datos internos del inicio de sesión con código
     private String codigoLargo;
@@ -73,6 +74,7 @@ final class Facebook {
     synchronized void guardar(Properties p) {
         try {
             File f = archivo(), tmp = new File(f.getAbsolutePath() + ".tmp");
+            f.getParentFile().mkdirs();
             OutputStreamWriter w = new OutputStreamWriter(new FileOutputStream(tmp), "UTF-8");
             try { p.store(w, "Portarretratos - Facebook (no compartir)"); } finally { w.close(); }
             if (f.exists()) f.delete();
@@ -85,8 +87,8 @@ final class Facebook {
         if (appId != null) p.setProperty("app_id", appId.trim());
         if (clientToken != null) p.setProperty("client_token", clientToken.trim());
         if (album != null) p.setProperty("album", album.trim());
-        guardar(p);
         error = null;
+        guardar(p); // si falla, deja el error para mostrarlo
         conectarYa = true;
     }
 
@@ -197,9 +199,19 @@ final class Facebook {
             guardar(d);
             codigo = null; codigoLargo = null; conectarYa = false; error = null;
             try {
-                JSONObject yo = new JSONObject(Red.pedir("GET", GRAPH + "/me?fields=name&access_token="
+                JSONObject yo = new JSONObject(Red.pedir("GET", GRAPH + "/me?fields=id,name&access_token="
                         + enc(r.getString("access_token")), null));
-                if (yo.has("name")) { d = datos(); d.setProperty("nombre", yo.getString("name")); guardar(d); }
+                d = datos();
+                String antes = d.getProperty("cuenta_id", ""), ahoraId = yo.optString("id", "");
+                if (!antes.isEmpty() && !ahoraId.isEmpty() && !antes.equals(ahoraId)) {
+                    // Se conectó otra persona: quitar las fotos de la cuenta anterior.
+                    File[] viejas = carpetaFotos().listFiles();
+                    if (viejas != null) for (File v : viejas) v.delete();
+                    carpetas.cambio = true;
+                }
+                if (!ahoraId.isEmpty()) d.setProperty("cuenta_id", ahoraId);
+                if (yo.has("name")) d.setProperty("nombre", yo.getString("name"));
+                guardar(d);
             } catch (Exception ignored) { }
             revisarYa = true;
             return 1;
@@ -234,7 +246,7 @@ final class Facebook {
         }
         JSONArray lista = r.optJSONArray("data");
         File dir = carpetaFotos();
-        int nuevas = 0, total = lista == null ? 0 : lista.length();
+        int nuevas = 0, malas = 0, total = lista == null ? 0 : lista.length();
         Set<String> vistas = new HashSet<String>();
         for (int i = 0; i < total; i++) {
             JSONObject foto = lista.getJSONObject(i);
@@ -245,17 +257,28 @@ final class Facebook {
             String id = foto.getString("id").replaceAll("[^0-9_]", "");
             File destino = new File(dir, "fb-" + id + ".jpg");
             vistas.add(destino.getName());
-            if (destino.isFile()) continue;
+            if (destino.isFile()) {
+                if (Diagnostico.abrible(Diagnostico.tipo(destino))) continue;
+                destino.delete(); // quedó dañada o en un formato que no abre: bajarla otra vez
+            }
             String fuente = mejorTamano(foto.optJSONArray("images"));
             if (fuente == null) continue;
-            Red.descargar(fuente, destino);
+            String tipo = Red.descargar(fuente, destino);
+            String real = Diagnostico.tipo(destino);
+            if (!Diagnostico.abrible(real)) {
+                // Formato que Android 4.4 no abre (p. ej. HEIC/AVIF): no guardarlo y avisar.
+                destino.delete();
+                malas++;
+                ultimoFormatoMalo = real + " / " + tipo;
+                continue;
+            }
             nuevas++;
         }
         limpiarViejas(dir);
         p = datos();
         p.setProperty("ultima_revision", String.valueOf(System.currentTimeMillis()));
         guardar(p);
-        error = null;
+        error = malas == 0 ? null : malas + " fotos vinieron en un formato que la tablet no abre (" + ultimoFormatoMalo + ")";
         ultimoMensaje = nuevas == 0 ? "Sin fotos nuevas" : nuevas + (nuevas == 1 ? " foto nueva" : " fotos nuevas");
         if (nuevas > 0) carpetas.cambio = true;
     }
